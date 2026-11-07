@@ -404,14 +404,14 @@ export const initialDropPoints = [
     id: 2,
     name: "Bank Sampah Induk (BSI) Kota Bandung",
     city: "Bandung",
-    address: "Jl. Terusan Bojongsoang No.174, Baleendah, Kec. Baleendah, Kabupaten Bandung, Jawa Barat 40375",
+    address: "Blk. B-C No.c27, Jatihandap, Kec. Mandalajati, Kota Bandung, Jawa Barat 40195",
     accepted_types: JSON.stringify(["Plastik PET", "Kardus", "Kertas HVS", "Kaleng Aluminium", "Kaca Botol"]),
     opening_hours: "Senin - Jumat: 08.30 - 15.30 WIB",
     contact_phone: "+62 822-1234-5678",
     incentive: "Uang tunai per kilogram atau saldo dompet digital (Gopay/OVO)",
     latitude: -6.898333,
     longitude: 107.662917,
-    map_link: "https://www.google.com/maps/search/?api=1&query=Bank+Sampah+Induk+Kota+Bandung+Jl+Terusan+Bojongsoang+No+174+Baleendah+Bandung"
+    map_link: "https://www.google.com/maps/place/Bank+sampah+induk+kota+bandung/@-6.8987075,107.6477912,15.25z/data=!4m10!1m2!2m1!1sBank+Sampah+Induk+(BSI)+Kota+Bandung!3m6!1s0x2e68e77e27f9569d:0x89a334d7c681e4ae!8m2!3d-6.8983484!4d107.6630023!15sCiRCYW5rIFNhbXBhaCBJbmR1ayAoQlNJKSBLb3RhIEJhbmR1bmdaJCIiYmFuayBzYW1wYWggaW5kdWsgYnNpIGtvdGEgYmFuZHVuZ5IBC3BhcmtpbmdfbG90mgFEQ2k5RFFVbFJRVU52WkVOb2RIbGpSamx2VDIxR01HSnNVVE5TUjJoR1lsVjRhMW96UlhSUFJVNXZaVlpSZWxKc1JSQULgAQD6AQQIABA5!16s%2Fg%2F11rkxw106k?entry=ttu&g_ep=EgoyMDI2MTEwMy4wIKXMDSoASAFQAw%3D%3D"
   },
   {
     id: 3,
@@ -476,6 +476,6 @@ export const initialDropPoints = [
     incentive: "Voucher Kedai Kopi Dago, Bibit Tanaman Gratis, & Uang Tunai Kilat",
     latitude: -6.874833,
     longitude: 107.616694,
-    map_link: "https://www.google.com/maps/search/?api=1&query=Bank+Sampah+Hijau+Dago+Kreatif+Jl+Dago+Barat+No+83+Coblong+Bandung"
+    map_link: "https://www.google.com/maps/place/Bank+Sampah+Unit+dabaresih+(Dago+Barat+Resik+Hejo)/@-6.8754592,107.6144738,18z/data=!4m10!1m2!2m1!1sBank+Sampah+Hijau+Dago+Kreatif,+Jl.+Dago+Barat+No.83,+Dago,+Kecamatan+Coblong,+Kota+Bandung,+Jawa+Barat+40135!3m6!1s0x2e68e7bcc8a022af:0xe138a6ef3fbb7224!8m2!3d-6.8748434!4d107.6166042!15sCm1CYW5rIFNhbXBhaCBIaWphdSBEYWdvIEtyZWF0aWYsIEpsLiBEYWdvIEJhcmF0IE5vLjgzLCBEYWdvLCBLZWNhbWF0YW4gQ29ibG9uZywgS290YSBCYW5kdW5nLCBKYXdhIEJhcmF0IDQwMTM1kgEaZW52aXJvbm1lbnRhbF9vcmdhbml6YXRpb27gAQA!16s%2Fg%2F11q3qq11tt?entry=ttu&g_ep=EgoyMDI2MTEwMy4wIKXMDSoASAFQAw%3D%3D"
   }
 ];
