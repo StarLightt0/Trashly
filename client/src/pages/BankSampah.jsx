@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import { dropPointAPI } from '../services/api';
 
-const CITIES = ['all', 'Bandung', 'Cimahi', 'Jakarta', 'Surabaya'];
+const CITIES = ['all', 'Bandung', 'Jakarta', 'Surabaya'];
 
 const WASTE_CATEGORIES = [
   'all',

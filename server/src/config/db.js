@@ -310,19 +310,12 @@ export async function initDatabase() {
       );
     }
 
-    // 8. Seed drop points & update real coordinates/links
+    // 8. Replace drop points with the exact 7 requested locations
+    await pool.query('DELETE FROM drop_points;');
     for (const dp of initialDropPoints) {
       await pool.query(
         `INSERT INTO drop_points (id, name, city, address, accepted_types, opening_hours, contact_phone, incentive, latitude, longitude, map_link) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE 
-           name = VALUES(name),
-           address = VALUES(address),
-           map_link = VALUES(map_link),
-           latitude = VALUES(latitude),
-           longitude = VALUES(longitude),
-           opening_hours = VALUES(opening_hours),
-           incentive = VALUES(incentive)`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [dp.id, dp.name, dp.city, dp.address, dp.accepted_types, dp.opening_hours, dp.contact_phone, dp.incentive, dp.latitude, dp.longitude, dp.map_link]
       );
     }
