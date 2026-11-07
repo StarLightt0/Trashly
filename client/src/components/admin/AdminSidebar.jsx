@@ -9,6 +9,8 @@ import {
   Users,
   ExternalLink,
   ShieldCheck,
+  Calculator,
+  MessageSquare,
   X
 } from 'lucide-react';
 
@@ -19,6 +21,8 @@ const navItems = [
   { name: 'Kuis & Soal', path: '/admin/quizzes', icon: HelpCircle },
   { name: 'Log Scan AI', path: '/admin/scans', icon: Scan },
   { name: 'Pengguna & Poin', path: '/admin/users', icon: Users },
+  { name: 'Kalkulator Jejak', path: '/admin/calculator', icon: Calculator },
+  { name: 'Asisten Chatbot AI', path: '/admin/chat', icon: MessageSquare }
 ];
 
 export default function AdminSidebar({ isOpen, onClose }) {

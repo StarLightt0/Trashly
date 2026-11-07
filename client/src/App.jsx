@@ -26,6 +26,8 @@ import AdminBankSampah from './pages/admin/AdminBankSampah';
 import AdminQuizzes from './pages/admin/AdminQuizzes';
 import AdminScans from './pages/admin/AdminScans';
 import AdminUsers from './pages/admin/AdminUsers';
+import AdminCalculator from './pages/admin/AdminCalculator';
+import AdminChat from './pages/admin/AdminChat';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -64,6 +66,8 @@ export default function App() {
               <Route path="quizzes" element={<AdminQuizzes />} />
               <Route path="scans" element={<AdminScans />} />
               <Route path="users" element={<AdminUsers />} />
+              <Route path="calculator" element={<AdminCalculator />} />
+              <Route path="chat" element={<AdminChat />} />
             </Route>
           </Route>
 

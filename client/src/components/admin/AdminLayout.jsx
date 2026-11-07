@@ -13,6 +13,8 @@ export default function AdminLayout() {
     if (pathname.includes('/admin/quizzes')) return 'Manajemen Kuis & Bank Soal';
     if (pathname.includes('/admin/scans')) return 'Log Pemindaian Visual Scan AI';
     if (pathname.includes('/admin/users')) return 'Manajemen Pengguna & Eco-Points';
+    if (pathname.includes('/admin/calculator')) return 'Konfigurasi Parameter Kalkulator & Emisi';
+    if (pathname.includes('/admin/chat')) return 'Monitoring & Pengujian Asisten Chatbot AI';
     return 'Dashboard & Statistik Platform';
   };
 

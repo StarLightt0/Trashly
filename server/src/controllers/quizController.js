@@ -399,8 +399,9 @@ export async function getLeaderboard(req, res) {
     if (isDbConnected()) {
       try {
         const pool = getPool();
+        // Khusus akun dengan role 'admin' tidak diikutsertakan dalam kompetisi leaderboard
         const [rows] = await pool.query(
-          'SELECT id, name, email, points, avatar, role, created_at FROM users ORDER BY points DESC LIMIT 50'
+          "SELECT id, name, email, points, avatar, role, created_at FROM users WHERE role != 'admin' OR role IS NULL ORDER BY points DESC LIMIT 50"
         );
         if (rows && rows.length > 0) {
           users = rows;
@@ -412,6 +413,7 @@ export async function getLeaderboard(req, res) {
 
     if (users.length === 0) {
       users = [...inMemoryStore.users]
+        .filter(u => u.role !== 'admin')
         .sort((a, b) => (Number(b.points) || 0) - (Number(a.points) || 0))
         .slice(0, 50)
         .map(({ password, ...u }) => u);

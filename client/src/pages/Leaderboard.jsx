@@ -9,7 +9,8 @@ import {
   UserCheck, 
   Crown,
   Medal,
-  HelpCircle
+  HelpCircle,
+  ShieldCheck
 } from 'lucide-react';
 import { quizAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -35,12 +36,15 @@ export default function Leaderboard() {
     fetchLeaderboard();
   }, []);
 
+  // Khusus akun admin tidak diikutsertakan dalam kompetisi leaderboard
+  const userLeaderboard = leaderboard.filter(item => item.role !== 'admin');
+
   // Find current user's rank info in the leaderboard
-  const currentUserEntry = leaderboard.find(
+  const currentUserEntry = userLeaderboard.find(
     item => (user?.id && String(item.id) === String(user.id)) || (user?.email && item.email === user.email)
   );
 
-  const topThree = leaderboard.slice(0, 3);
+  const topThree = userLeaderboard.slice(0, 3);
 
   const isUserMatch = (item) => {
     if (!user || !item) return false;
@@ -66,44 +70,81 @@ export default function Leaderboard() {
 
       {/* Pinned User Rank Card (Always visible when logged in) */}
       {isAuthenticated && (
-        <div className="bg-gradient-to-r from-emerald-600 via-brand-600 to-teal-700 text-white rounded-3xl p-5 sm:p-6 shadow-xl relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="absolute -right-10 -bottom-10 w-44 h-44 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+        user?.role === 'admin' ? (
+          <div className="bg-gradient-to-r from-purple-900 via-indigo-800 to-slate-900 text-white rounded-3xl p-5 sm:p-6 shadow-xl relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-4 border border-purple-500/30">
+            <div className="absolute -right-10 -bottom-10 w-44 h-44 bg-purple-500/10 rounded-full blur-2xl pointer-events-none"></div>
 
-          <div className="flex items-center gap-4 text-center sm:text-left z-10">
-            <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 flex flex-col items-center justify-center shrink-0 shadow-inner">
-              <span className="text-[10px] uppercase font-bold text-emerald-100">Posisi</span>
-              <span className="text-xl sm:text-2xl font-black leading-none">
-                #{currentUserEntry?.rank || '-'}
-              </span>
-            </div>
-
-            <div className="space-y-1">
-              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                <span className="font-extrabold text-base sm:text-lg">{user?.name}</span>
-                <span className="bg-white/25 backdrop-blur-sm text-white px-2 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase">
-                  Akun Anda
-                </span>
+            <div className="flex items-center gap-4 text-center sm:text-left z-10">
+              <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex flex-col items-center justify-center shrink-0 shadow-inner">
+                <ShieldCheck className="w-7 h-7 text-purple-300" />
+                <span className="text-[9px] uppercase font-bold text-purple-200 mt-0.5">Admin</span>
               </div>
-              <div className="text-xs text-emerald-100 flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                <span>{currentUserEntry?.badge || 'Sahabat Bumi 🌱'}</span>
-                <span>•</span>
-                <span className="font-black text-white text-sm">
-                  {currentUserEntry?.points !== undefined ? currentUserEntry.points : (user?.points || 0)} Eco-Points
-                </span>
+
+              <div className="space-y-1">
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                  <span className="font-extrabold text-base sm:text-lg">{user?.name}</span>
+                  <span className="bg-purple-500/40 text-purple-100 border border-purple-400/40 px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase">
+                    Akun Administrator
+                  </span>
+                </div>
+                <div className="text-xs text-purple-200 flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                  <span>Khusus akun admin tidak diikutsertakan dalam kompetisi leaderboard</span>
+                  <span>•</span>
+                  <span className="font-black text-white text-sm">{user?.points || 0} Eco-Points</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="flex items-center gap-2 z-10 shrink-0">
-            <Link
-              to="/kuis"
-              className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-white text-emerald-900 font-extrabold text-xs rounded-xl shadow-md hover:bg-emerald-50 transition-all active:scale-95 whitespace-nowrap"
-            >
-              <Sparkles className="w-4 h-4 text-amber-500 fill-amber-500" />
-              Kerjakan Kuis & Tambah Poin
-            </Link>
+            <div className="flex items-center gap-2 z-10 shrink-0">
+              <Link
+                to="/admin"
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-white text-purple-900 font-extrabold text-xs rounded-xl shadow-md hover:bg-purple-50 transition-all active:scale-95 whitespace-nowrap"
+              >
+                <ShieldCheck className="w-4 h-4 text-purple-600" />
+                Buka Panel Admin
+              </Link>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="bg-gradient-to-r from-emerald-600 via-brand-600 to-teal-700 text-white rounded-3xl p-5 sm:p-6 shadow-xl relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="absolute -right-10 -bottom-10 w-44 h-44 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+
+            <div className="flex items-center gap-4 text-center sm:text-left z-10">
+              <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 flex flex-col items-center justify-center shrink-0 shadow-inner">
+                <span className="text-[10px] uppercase font-bold text-emerald-100">Posisi</span>
+                <span className="text-xl sm:text-2xl font-black leading-none">
+                  #{currentUserEntry?.rank || '-'}
+                </span>
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                  <span className="font-extrabold text-base sm:text-lg">{user?.name}</span>
+                  <span className="bg-white/25 backdrop-blur-sm text-white px-2 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase">
+                    Akun Anda
+                  </span>
+                </div>
+                <div className="text-xs text-emerald-100 flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                  <span>{currentUserEntry?.badge || 'Sahabat Bumi 🌱'}</span>
+                  <span>•</span>
+                  <span className="font-black text-white text-sm">
+                    {currentUserEntry?.points !== undefined ? currentUserEntry.points : (user?.points || 0)} Eco-Points
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 z-10 shrink-0">
+              <Link
+                to="/kuis"
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-white text-emerald-900 font-extrabold text-xs rounded-xl shadow-md hover:bg-emerald-50 transition-all active:scale-95 whitespace-nowrap"
+              >
+                <Sparkles className="w-4 h-4 text-amber-500 fill-amber-500" />
+                Kerjakan Kuis & Tambah Poin
+              </Link>
+            </div>
+          </div>
+        )
       )}
 
       {loading ? (
