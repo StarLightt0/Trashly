@@ -40,7 +40,9 @@ export const quizAPI = {
 
 export const userAPI = {
   getDashboard: () => api.get('/user/dashboard'),
-  updateProfile: (profileData) => api.put('/user/profile', profileData)
+  updateProfile: (profileData) => api.put('/user/profile', profileData),
+  getCalculatorStatus: () => api.get('/user/calculator-status'),
+  claimCalculatorReward: (data) => api.post('/user/calculator-reward', data || {})
 };
 
 export default api;

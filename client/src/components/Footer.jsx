@@ -44,10 +44,13 @@ export default function Footer() {
                 <Link to="/ensiklopedia" className="hover:text-brand-400 transition-colors">Ensiklopedia Sampah</Link>
               </li>
               <li>
-                <Link to="/login" className="hover:text-brand-400 transition-colors">Masuk Akun</Link>
+                <Link to="/kuis" className="hover:text-brand-400 transition-colors">Kuis Pilah Sampah</Link>
               </li>
               <li>
-                <Link to="/register" className="hover:text-brand-400 transition-colors">Daftar Akun Baru</Link>
+                <Link to="/kalkulator" className="hover:text-brand-400 transition-colors">Kalkulator Jejak Sampah</Link>
+              </li>
+              <li>
+                <Link to="/leaderboard" className="hover:text-brand-400 transition-colors">Papan Peringkat</Link>
               </li>
             </ul>
           </div>

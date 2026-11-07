@@ -8,9 +8,11 @@ import {
   Sparkles, 
   Trophy, 
   Award, 
-  RotateCcw, 
   HelpCircle,
-  AlertCircle
+  AlertCircle,
+  Clock,
+  User,
+  Lock
 } from 'lucide-react';
 import { quizAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -116,6 +118,47 @@ export default function QuizPlay() {
     );
   }
 
+  // 24-Hour Cooldown Locked View
+  if (quiz?.cooldown?.is_locked && !result) {
+    return (
+      <div className="max-w-md mx-auto px-4 py-16 text-center space-y-6">
+        <div className="w-20 h-20 bg-slate-100 text-slate-600 rounded-3xl flex items-center justify-center mx-auto shadow-inner border border-slate-200">
+          <Clock className="w-10 h-10 text-brand-600 animate-pulse" />
+        </div>
+        <div className="space-y-2">
+          <span className="text-xs font-black uppercase tracking-wider text-slate-400">
+            {quiz.title}
+          </span>
+          <h2 className="text-2xl font-black text-slate-900">
+            Kuis Telah Selesai Hari Ini
+          </h2>
+          <p className="text-xs text-slate-500 leading-relaxed max-w-sm mx-auto">
+            Anda sudah mengerjakan kuis ini dengan skor <strong>{quiz.cooldown.last_score}%</strong>. Sesuai ketentuan kompetisi, kuis hanya dapat dikerjakan 1 kali dalam 24 jam.
+          </p>
+        </div>
+
+        <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-800 font-semibold">
+          ⏳ Kuis dapat dikerjakan kembali dalam <strong>{quiz.cooldown.hours_remaining} jam</strong>.
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+          <Link
+            to="/kuis"
+            className="w-full sm:w-auto px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl text-xs shadow-md transition-all"
+          >
+            Pilih Kuis Lainnya
+          </Link>
+          <Link
+            to="/leaderboard"
+            className="w-full sm:w-auto px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs transition-all"
+          >
+            Lihat Papan Skor
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   const currentQuestion = questions[currentIndex];
   const progressPercent = Math.round(((currentIndex + 1) / questions.length) * 100);
 
@@ -170,30 +213,41 @@ export default function QuizPlay() {
             </div>
           </div>
 
+          {/* 24-Hour Cooldown & Completion Notice (No Retake) */}
+          <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl max-w-lg mx-auto text-center space-y-1.5">
+            <div className="flex items-center justify-center gap-1.5 font-bold text-amber-900 text-xs">
+              <Lock className="w-4 h-4 text-amber-600" />
+              Kuis Telah Selesai untuk Hari Ini
+            </div>
+            <p className="text-[11px] text-amber-800 leading-relaxed">
+              Kuis ini sudah selesai Anda kerjakan. Sesuai aturan, <strong>kuis tidak dapat diulang lagi</strong> hari ini dengan batas waktu jeda <strong>1 hari (24 jam)</strong>.
+            </p>
+          </div>
+
           {/* Action buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-            <button
-              onClick={handleRestart}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition-colors"
+            <Link
+              to="/kuis"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs transition-colors shadow-md shadow-brand-600/30"
             >
-              <RotateCcw className="w-4 h-4" />
-              Ulangi Kuis
-            </button>
+              <span>Pilih Kuis Lainnya</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
 
             <Link
               to="/leaderboard"
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors shadow-md"
             >
               <Trophy className="w-4 h-4 text-amber-400" />
-              Lihat Papan Skor
+              <span>Lihat Papan Skor</span>
             </Link>
 
             <Link
-              to="/kuis"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs transition-colors shadow-md shadow-brand-600/30"
+              to="/profil"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition-colors"
             >
-              Kuis Lainnya
-              <ArrowRight className="w-4 h-4" />
+              <User className="w-4 h-4" />
+              <span>Dashboard Profil</span>
             </Link>
           </div>
 

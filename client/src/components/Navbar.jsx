@@ -14,7 +14,8 @@ import {
   X,
   Trophy,
   HelpCircle,
-  Award
+  Award,
+  Calculator
 } from 'lucide-react';
 
 export default function Navbar() {
@@ -90,6 +91,18 @@ export default function Navbar() {
             >
               <HelpCircle className="w-4 h-4" />
               Kuis Pilah
+            </Link>
+
+            <Link
+              to="/kalkulator"
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors ${
+                isActive('/kalkulator')
+                  ? 'text-brand-600 bg-brand-50 font-semibold' 
+                  : 'text-slate-600 hover:text-brand-600 hover:bg-slate-50'
+              }`}
+            >
+              <Calculator className="w-4 h-4" />
+              Kalkulator Jejak
             </Link>
 
             <Link
@@ -224,6 +237,17 @@ export default function Navbar() {
           >
             <HelpCircle className="w-4 h-4" />
             Kuis Pilah Sampah
+          </Link>
+
+          <Link
+            to="/kalkulator"
+            onClick={() => setMobileMenuOpen(false)}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium ${
+              isActive('/kalkulator') ? 'text-brand-600 bg-brand-50 font-bold' : 'text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            <Calculator className="w-4 h-4" />
+            Kalkulator Jejak
           </Link>
 
           <Link

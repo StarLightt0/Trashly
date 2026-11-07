@@ -5,7 +5,8 @@ import {
   initialCategories, 
   initialWasteItems, 
   initialQuizzes, 
-  initialQuestions 
+  initialQuestions,
+  initialDropPoints
 } from '../seeds/initialData.js';
 
 dotenv.config();
@@ -84,6 +85,7 @@ export const inMemoryStore = {
   wasteItems: [...initialWasteItems],
   quizzes: [...initialQuizzes],
   questions: [...initialQuestions],
+  dropPoints: [...initialDropPoints],
   quizAttempts: [
     {
       id: 1,
@@ -139,10 +141,25 @@ export async function initDatabase() {
         password VARCHAR(255) NOT NULL,
         role VARCHAR(50) DEFAULT 'user',
         points INT DEFAULT 0,
-        avatar VARCHAR(255) DEFAULT NULL,
+        avatar LONGTEXT DEFAULT NULL,
+        last_calculator_claim TIMESTAMP NULL DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
+
+    // Ensure avatar column is LONGTEXT for photo storage
+    try {
+      await pool.query('ALTER TABLE users MODIFY COLUMN avatar LONGTEXT;');
+    } catch (e) {
+      // Column might already be LONGTEXT or table newly created
+    }
+
+    // Ensure last_calculator_claim column exists for 1-week cooldown
+    try {
+      await pool.query('ALTER TABLE users ADD COLUMN last_calculator_claim TIMESTAMP NULL DEFAULT NULL;');
+    } catch (e) {
+      // Column might already exist
+    }
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS waste_items (
@@ -201,6 +218,22 @@ export async function initDatabase() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
         FOREIGN KEY (quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS drop_points (
+        id INT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        city VARCHAR(100) NOT NULL,
+        address TEXT NOT NULL,
+        accepted_types JSON NOT NULL,
+        opening_hours VARCHAR(255),
+        contact_phone VARCHAR(50),
+        incentive TEXT,
+        latitude DECIMAL(10, 8),
+        longitude DECIMAL(11, 8),
+        map_link TEXT
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
 
@@ -270,7 +303,20 @@ export async function initDatabase() {
       }
     }
 
-    // 8. Seed demo users if empty
+    // 8. Seed drop points if empty
+    const [existingDropPoints] = await pool.query('SELECT COUNT(*) as count FROM drop_points');
+    if (existingDropPoints[0].count === 0) {
+      console.log('📍 Melakukan seed titik bank sampah awal...');
+      for (const dp of initialDropPoints) {
+        await pool.query(
+          `INSERT INTO drop_points (id, name, city, address, accepted_types, opening_hours, contact_phone, incentive, latitude, longitude, map_link) 
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [dp.id, dp.name, dp.city, dp.address, dp.accepted_types, dp.opening_hours, dp.contact_phone, dp.incentive, dp.latitude, dp.longitude, dp.map_link]
+        );
+      }
+    }
+
+    // 9. Seed demo users if empty
     const [existingUsers] = await pool.query('SELECT COUNT(*) as count FROM users');
     if (existingUsers[0].count === 0) {
       for (const u of inMemoryStore.users) {

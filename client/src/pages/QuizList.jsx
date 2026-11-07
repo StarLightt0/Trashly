@@ -105,13 +105,20 @@ export default function QuizList() {
                   
                   {/* Badges Bar */}
                   <div className="flex items-center justify-between">
-                    <span className={`text-[11px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider ${
-                      quiz.difficulty === 'Mudah'
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : 'bg-amber-100 text-amber-800'
-                    }`}>
-                      Tingkat: {quiz.difficulty}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[11px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider ${
+                        quiz.difficulty === 'Mudah'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-amber-100 text-amber-800'
+                      }`}>
+                        Tingkat: {quiz.difficulty}
+                      </span>
+                      {quiz.is_locked && (
+                        <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-300 flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Selesai ({quiz.last_score}%)
+                        </span>
+                      )}
+                    </div>
 
                     <span className="inline-flex items-center gap-1.5 bg-brand-50 text-brand-700 font-extrabold text-xs px-3 py-1 rounded-full border border-brand-200">
                       <Sparkles className="w-3.5 h-3.5 text-brand-500 fill-brand-500" />
@@ -148,14 +155,29 @@ export default function QuizList() {
                   </div>
                 </div>
 
-                {/* Start Button */}
-                <Link
-                  to={`/kuis/${quiz.slug || quiz.id}`}
-                  className="w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl bg-slate-900 hover:bg-brand-600 text-white font-extrabold text-sm shadow-md transition-all group-hover:shadow-lg active:scale-[0.98]"
-                >
-                  <span>Mulai Kuis Sekarang</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </Link>
+                {/* Start Button with 24h Lock */}
+                {quiz.is_locked ? (
+                  <div className="space-y-1.5">
+                    <button
+                      disabled
+                      className="w-full flex items-center justify-center gap-2 py-3 px-6 rounded-xl bg-slate-100 text-slate-500 font-bold text-xs border border-slate-200 cursor-not-allowed"
+                    >
+                      <Clock className="w-4 h-4 text-slate-400" />
+                      <span>Kuis Selesai Hari Ini</span>
+                    </button>
+                    <p className="text-[11px] text-center text-slate-400">
+                      Batas 1x sehari. Dapat dikerjakan lagi dalam <strong>{quiz.hours_remaining} jam</strong>.
+                    </p>
+                  </div>
+                ) : (
+                  <Link
+                    to={`/kuis/${quiz.slug || quiz.id}`}
+                    className="w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl bg-slate-900 hover:bg-brand-600 text-white font-extrabold text-sm shadow-md transition-all group-hover:shadow-lg active:scale-[0.98]"
+                  >
+                    <span>Mulai Kuis Sekarang</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                )}
               </div>
             ))}
           </div>

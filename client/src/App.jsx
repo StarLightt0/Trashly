@@ -10,6 +10,7 @@ import QuizList from './pages/QuizList';
 import QuizPlay from './pages/QuizPlay';
 import Leaderboard from './pages/Leaderboard';
 import Profile from './pages/Profile';
+import Calculator from './pages/Calculator';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
@@ -36,6 +37,7 @@ export default function App() {
               <Route path="/kuis" element={<QuizList />} />
               <Route path="/kuis/:id" element={<QuizPlay />} />
               <Route path="/leaderboard" element={<Leaderboard />} />
+              <Route path="/kalkulator" element={<Calculator />} />
               <Route path="/profil" element={<Profile />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
