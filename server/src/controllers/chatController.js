@@ -180,7 +180,10 @@ ${ragContext}`;
 
       return res.json({
         success: true,
-        reply: reply.trim()
+        reply: reply.trim(),
+        data: {
+          reply: reply.trim()
+        }
       });
 
     } catch (fetchError) {

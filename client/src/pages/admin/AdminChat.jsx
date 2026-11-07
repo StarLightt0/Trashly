@@ -49,22 +49,31 @@ export default function AdminChat() {
     const userText = input.trim();
     setInput('');
 
+    // Kirim riwayat percakapan sebelumnya (tidak menduplikasi pesan saat ini)
+    const history = messages
+      .filter(m => m.text)
+      .slice(-10)
+      .map(m => ({ role: m.role, text: m.text }));
+
     const newMessages = [...messages, { role: 'user', text: userText }];
     setMessages(newMessages);
     setLoading(true);
 
     try {
-      const history = newMessages.slice(-10);
       const res = await chatAPI.send(userText, history);
-      if (res.data.success) {
-        setMessages([...newMessages, { role: 'assistant', text: res.data.data.reply }]);
+      const botReply = res.data?.reply || res.data?.data?.reply;
+
+      if (res.data?.success && botReply) {
+        setMessages([...newMessages, { role: 'assistant', text: botReply }]);
       } else {
-        setMessages([...newMessages, { role: 'assistant', text: res.data.message || 'Layanan AI sedang tidak tersedia.' }]);
+        setMessages([...newMessages, { role: 'assistant', text: res.data?.message || 'Layanan AI sedang tidak tersedia.' }]);
       }
     } catch (err) {
+      console.error('Error pengiriman chat di Admin:', err);
+      const errorMsg = err.response?.data?.message || err.message || 'Gagal menghubungi server Gemini AI.';
       setMessages([...newMessages, {
         role: 'assistant',
-        text: err.response?.data?.message || 'Gagal menghubungi server Gemini AI.'
+        text: errorMsg
       }]);
     } finally {
       setLoading(false);

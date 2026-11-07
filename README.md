@@ -49,6 +49,17 @@ Aplikasi website interaktif untuk mengedukasi masyarakat mengenai pemilahan dan 
 - Bonus selamat datang **+50 Eco-Points** saat mendaftar.
 - Riwayat kuis, pemindaian AI, dan lencana (*badges*).
 
+### 9. Panel Kontrol Administrator (`/admin`)
+- **Dashboard Analitik**: Ringkasan KPI pengguna, item sampah, bank sampah, pemindaian AI, dan status sistem secara seketika (*real-time*).
+- **CRUD Ensiklopedia Sampah**: Kelola item sampah, kategori, waktu urai, dan penyusun langkah pemilahan bertahap dinamis.
+- **CRUD Bank Sampah & Leaflet Map Picker**: Tambah dan ubah titik setor sampah dengan mengklik langsung peta interaktif untuk menentukan koordinat lintang/bujur akurat serta konversi otomatis ke format DMS.
+- **CRUD Kuis & Bank Soal**: Buat paket kuis edukasi, tentukan tingkat kesulitan dan reward poin, serta kelola pertanyaan pilihan ganda dengan kunci jawaban dan teks penjelasan edukatif.
+- **Monitoring Scan AI**: Log pemindaian gambar sampah pengguna, preview foto, akurasi, dan badge sumber (`Dianalisis AI` vs `Mode offline`).
+- **Manajemen Pengguna**: Atur role pengguna (`user` ↔ `admin`) dan lakukan penyesuaian saldo Eco-Points manual disertai catatan audit.
+- **Parameter Kalkulator & Emisi**: Kelola koefisien emisi CO2e sampah (standar IPCC) dan voucher reward mingguan.
+- **Sandbox Chatbot AI**: Uji coba respons asisten Gemini AI serta inspeksi data referensi RAG ensiklopedia secara langsung.
+- **Proteksi RBAC**: Dilindungi oleh middleware `requireAdmin` dan komponen `<AdminGuard>` (403 Forbidden untuk selain admin). Akun admin secara otomatis tidak diikutsertakan dalam kompetisi leaderboard publik.
+
 ---
 
 ## 🛠️ Tech Stack
@@ -139,12 +150,16 @@ Trashly/
 ├── client/                     # Frontend React (Vite + Tailwind CSS)
 │   ├── src/
 │   │   ├── components/         # Navbar, Footer, ChatWidget.jsx
+│   │   │   └── admin/          # AdminGuard, AdminLayout, AdminSidebar, AdminTopbar
 │   │   ├── context/            # AuthContext.jsx (JWT State)
 │   │   ├── pages/              # Home, Encyclopedia, WasteDetail, ScanAI,
-│   │   │                       # BankSampah, QuizList, QuizPlay, Leaderboard,
-│   │   │                       # Calculator, Profile, Login, Register
-│   │   ├── services/           # api.js (Axios client: auth, waste, scan, chat, quiz)
-│   │   ├── App.jsx             # Router & Root Layout
+│   │   │   │                   # BankSampah, QuizList, QuizPlay, Leaderboard,
+│   │   │   │                   # Calculator, Profile, Login, Register
+│   │   │   └── admin/          # AdminDashboard, AdminWaste, AdminBankSampah,
+│   │   │                       # AdminQuizzes, AdminScans, AdminUsers,
+│   │   │                       # AdminCalculator, AdminChat
+│   │   ├── services/           # api.js (Axios client: auth, waste, scan, chat, quiz, admin)
+│   │   ├── App.jsx             # Router & Nested Layouts (Public & Admin Guard)
 │   │   └── main.jsx
 │   ├── package.json
 │   └── vite.config.js
@@ -152,10 +167,10 @@ Trashly/
 ├── server/                     # Backend API (Node.js + Express)
 │   ├── src/
 │   │   ├── config/             # db.js (MySQL pool & in-memory fallback)
-│   │   ├── controllers/        # auth, waste, scan, chat, quiz, user, dropPoint
-│   │   ├── middlewares/        # authMiddleware.js, rateLimitMiddleware.js
-│   │   ├── routes/             # authRoutes, wasteRoutes, scanRoutes, chatRoutes, dll.
-│   │   ├── seeds/              # initialData.js (Seed kategori, sampah, bank sampah)
+│   │   ├── controllers/        # auth, waste, scan, chat, quiz, user, dropPoint, adminController
+│   │   ├── middlewares/        # authMiddleware.js (requireAdmin), rateLimitMiddleware.js
+│   │   ├── routes/             # authRoutes, wasteRoutes, scanRoutes, chatRoutes, adminRoutes, dll.
+│   │   ├── seeds/              # initialData.js (Seed kategori, sampah, bank sampah, admin user)
 │   │   └── server.js           # Express App Entry Point & CORS restriction
 │   ├── .env.example            # Template konfigurasi environment
 │   ├── .env                    # File env lokal (terabaikan git)
@@ -169,6 +184,15 @@ Trashly/
 ---
 
 ## 🔑 Kredensial Akun Demo
+
+### 1. Akun Pengguna (Reguler User)
 - **Email**: `demo@trashly.id`
 - **Password**: `password123`
-*(Atau buat akun baru di halaman `/register` untuk mendapatkan bonus +50 Eco-Points!)*
+- **Role**: `user` *(Muncul di Papan Peringkat / Leaderboard)*
+
+### 2. Akun Administrator (Full Access CMS)
+- **Email**: `admin@trashly.id`
+- **Password**: `password123`
+- **Role**: `admin` *(Memiliki akses tombol "Admin Panel" & `/admin`)*
+
+*(Atau buat akun baru di halaman `/register` untuk mendapatkan bonus selamat datang +50 Eco-Points!)*
