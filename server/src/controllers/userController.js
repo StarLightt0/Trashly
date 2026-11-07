@@ -199,12 +199,14 @@ export async function updateProfile(req, res) {
       await pool.query(updateSql, params);
 
       const [updated] = await pool.query('SELECT * FROM users WHERE id = ?', [userId]);
-      const { password, ...safeUser } = updated[0];
-      const userResult = {
-        ...safeUser,
-        username: safeUser.name
-      };
-      return res.json({ success: true, message: 'Profil Anda berhasil diperbarui!', user: userResult });
+      if (updated && updated.length > 0) {
+        const { password, ...safeUser } = updated[0];
+        const userResult = {
+          ...safeUser,
+          username: safeUser.name
+        };
+        return res.json({ success: true, message: 'Profil Anda berhasil diperbarui!', user: userResult });
+      }
     } else {
       const u = inMemoryStore.users.find(usr => String(usr.id) === String(userId) || (req.user?.email && usr.email === req.user.email));
       if (!u) {

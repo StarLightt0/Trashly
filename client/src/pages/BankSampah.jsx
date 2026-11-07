@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { 
   MapPin, 
   Search, 
@@ -59,39 +61,13 @@ export default function BankSampah() {
   const [userLocation, setUserLocation] = useState(null);
   const [locating, setLocating] = useState(false);
   const [copiedId, setCopiedId] = useState(null);
-  const [leafletLoaded, setLeafletLoaded] = useState(false);
 
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef({});
+  const userMarkerRef = useRef(null);
 
-  // 1. Dynamically Load Leaflet CDN if not already loaded
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    // Check if stylesheet is present
-    if (!document.getElementById('leaflet-css')) {
-      const link = document.createElement('link');
-      link.id = 'leaflet-css';
-      link.rel = 'stylesheet';
-      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-      document.head.appendChild(link);
-    }
-
-    // Check if Leaflet JS is present
-    if (!window.L) {
-      const script = document.createElement('script');
-      script.id = 'leaflet-js';
-      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-      script.async = true;
-      script.onload = () => setLeafletLoaded(true);
-      document.body.appendChild(script);
-    } else {
-      setLeafletLoaded(true);
-    }
-  }, []);
-
-  // 2. Fetch Drop Points from Backend
+  // 1. Fetch Drop Points from Backend
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
@@ -119,72 +95,98 @@ export default function BankSampah() {
     return () => clearTimeout(timer);
   }, [selectedCity, selectedType, searchQuery]);
 
-  // 3. Initialize & Sync Leaflet Map
+  // 2. Initialize Leaflet Map once on Mount
   useEffect(() => {
-    if (!leafletLoaded || !window.L || !mapContainerRef.current) return;
+    if (!mapContainerRef.current) return;
 
-    // Initialize Map Instance once
-    if (!mapInstanceRef.current) {
-      const initialLat = selectedPoint?.latitude || -6.9147;
-      const initialLng = selectedPoint?.longitude || 107.6098;
-
-      const map = window.L.map(mapContainerRef.current, {
-        center: [initialLat, initialLng],
-        zoom: 12,
-        zoomControl: false
-      });
-
-      // Add Zoom control top-right
-      window.L.control.zoom({ position: 'topright' }).addTo(map);
-
-      // Tile Layer (OpenStreetMap / CartoDB)
-      window.L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-        maxZoom: 19
-      }).addTo(map);
-
-      mapInstanceRef.current = map;
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.remove();
+      mapInstanceRef.current = null;
     }
 
-    const map = mapInstanceRef.current;
+    if (mapContainerRef.current._leaflet_id) {
+      delete mapContainerRef.current._leaflet_id;
+    }
 
-    // Clear old markers
+    const defaultLat = selectedPoint?.latitude || -6.9175;
+    const defaultLng = selectedPoint?.longitude || 107.6191;
+
+    const map = L.map(mapContainerRef.current, {
+      center: [defaultLat, defaultLng],
+      zoom: 12,
+      zoomControl: false
+    });
+
+    L.control.zoom({ position: 'topright' }).addTo(map);
+
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19
+    }).addTo(map);
+
+    mapInstanceRef.current = map;
+
+    // Invalidate size after rendering to ensure full canvas coverage
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+    }, 250);
+
+    const handleResize = () => {
+      map.invalidateSize();
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', handleResize);
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
+  }, []);
+
+  // 3. Sync Markers with Drop Points and Selected Point
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    // Clear existing markers
     Object.values(markersRef.current).forEach((m) => m.remove());
     markersRef.current = {};
 
-    // Add markers for current dropPoints
+    if (!dropPoints || dropPoints.length === 0) return;
+
     dropPoints.forEach((point) => {
       if (!point.latitude || !point.longitude) return;
 
       const isSelected = selectedPoint?.id === point.id;
 
-      const iconHtml = `
-        <div style="
-          width: ${isSelected ? '36px' : '30px'};
-          height: ${isSelected ? '36px' : '30px'};
-          background: ${isSelected ? '#15803d' : '#16a34a'};
-          border: 3px solid #ffffff;
-          border-radius: 50%;
-          box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: ${isSelected ? '16px' : '12px'};
-          cursor: pointer;
-          transition: all 0.2s;
-        ">
-          ♻️
-        </div>
-      `;
-
-      const customIcon = window.L.divIcon({
-        className: 'custom-pin',
-        html: iconHtml,
-        iconSize: [isSelected ? 36 : 30, isSelected ? 36 : 30],
-        iconAnchor: [isSelected ? 18 : 15, isSelected ? 18 : 15]
+      const customIcon = L.divIcon({
+        className: 'trashly-pin',
+        html: `
+          <div style="
+            width: ${isSelected ? '38px' : '30px'};
+            height: ${isSelected ? '38px' : '30px'};
+            background: ${isSelected ? '#15803d' : '#16a34a'};
+            border: 3px solid #ffffff;
+            border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: ${isSelected ? '16px' : '12px'};
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+          ">
+            ♻️
+          </div>
+        `,
+        iconSize: [isSelected ? 38 : 30, isSelected ? 38 : 30],
+        iconAnchor: [isSelected ? 19 : 15, isSelected ? 19 : 15]
       });
 
-      const marker = window.L.marker([point.latitude, point.longitude], {
+      const marker = L.marker([point.latitude, point.longitude], {
         icon: customIcon
       }).addTo(map);
 
@@ -201,8 +203,8 @@ export default function BankSampah() {
             display: inline-block;
             background: #0f172a;
             color: #ffffff;
-            padding: 4px 10px;
-            border-radius: 6px;
+            padding: 5px 12px;
+            border-radius: 8px;
             text-decoration: none;
             font-weight: bold;
             font-size: 11px;
@@ -219,23 +221,22 @@ export default function BankSampah() {
       markersRef.current[point.id] = marker;
     });
 
-    // Fly to selected point smoothly
-    if (selectedPoint && selectedPoint.latitude && selectedPoint.longitude) {
+    if (selectedPoint?.latitude && selectedPoint?.longitude) {
       map.flyTo([selectedPoint.latitude, selectedPoint.longitude], 14, {
-        duration: 1.2
+        duration: 1.0
       });
       if (markersRef.current[selectedPoint.id]) {
         markersRef.current[selectedPoint.id].openPopup();
       }
     }
-  }, [leafletLoaded, dropPoints, selectedPoint]);
+  }, [dropPoints, selectedPoint]);
 
   // Handle Card Click -> Focus on Map
   const handleSelectPoint = (point) => {
     setSelectedPoint(point);
     if (mapInstanceRef.current && point.latitude && point.longitude) {
       mapInstanceRef.current.flyTo([point.latitude, point.longitude], 15, {
-        duration: 1.2
+        duration: 1.0
       });
       if (markersRef.current[point.id]) {
         markersRef.current[point.id].openPopup();
@@ -256,30 +257,48 @@ export default function BankSampah() {
         setUserLocation({ lat: latitude, lng: longitude });
         setLocating(false);
 
-        if (mapInstanceRef.current && window.L) {
-          mapInstanceRef.current.flyTo([latitude, longitude], 13);
-          window.L.circle([latitude, longitude], {
-            radius: 900,
-            color: '#2563eb',
-            fillColor: '#60a5fa',
-            fillOpacity: 0.15
-          }).addTo(mapInstanceRef.current);
+        if (mapInstanceRef.current) {
+          const map = mapInstanceRef.current;
+          map.flyTo([latitude, longitude], 14, { duration: 1.2 });
 
-          window.L.marker([latitude, longitude], {
-            icon: window.L.divIcon({
-              className: 'user-marker',
-              html: `<div style="background:#2563eb; width:16px; height:16px; border-radius:50%; border:3px solid white; box-shadow:0 0 10px #3b82f6;"></div>`,
-              iconSize: [16, 16],
-              iconAnchor: [8, 8]
-            })
-          }).addTo(mapInstanceRef.current).bindPopup('<strong>📍 Posisi Anda Saat Ini</strong>').openPopup();
+          if (userMarkerRef.current) {
+            userMarkerRef.current.remove();
+          }
+
+          const userIcon = L.divIcon({
+            className: 'user-marker',
+            html: `
+              <div style="
+                width: 32px;
+                height: 32px;
+                background: #2563eb;
+                border: 3px solid #ffffff;
+                border-radius: 50%;
+                box-shadow: 0 4px 12px rgba(37,99,235,0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 14px;
+              ">
+                📍
+              </div>
+            `,
+            iconSize: [32, 32],
+            iconAnchor: [16, 16]
+          });
+
+          userMarkerRef.current = L.marker([latitude, longitude], { icon: userIcon })
+            .addTo(map)
+            .bindPopup('<strong style="font-size:12px;">📍 Lokasi Anda Saat Ini</strong>')
+            .openPopup();
         }
       },
       (err) => {
-        console.warn('Geolocation error:', err);
+        console.warn('Geolocation error:', err.message);
         setLocating(false);
         alert('Gagal mendeteksi lokasi otomatis. Pastikan izin GPS aktif di browser Anda.');
-      }
+      },
+      { timeout: 8000, enableHighAccuracy: true }
     );
   };
 
@@ -584,17 +603,9 @@ export default function BankSampah() {
             {/* The Actual Leaflet Map Canvas */}
             <div
               ref={mapContainerRef}
-              className="w-full h-[540px] sm:h-[620px] rounded-2xl z-10 overflow-hidden bg-slate-100"
+              className="w-full h-[540px] sm:h-[620px] rounded-2xl z-10 overflow-hidden bg-slate-100 shadow-inner"
               style={{ minHeight: '520px' }}
-            >
-              {/* Fallback while Leaflet initializes */}
-              {!leafletLoaded && (
-                <div className="w-full h-full flex flex-col items-center justify-center space-y-2 text-slate-400">
-                  <div className="w-8 h-8 border-3 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
-                  <span className="text-xs font-semibold">Memuat Peta Interaktif...</span>
-                </div>
-              )}
-            </div>
+            />
 
             {/* Floating Map Legend Indicator */}
             <div className="absolute top-6 left-6 z-20 bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-slate-200 text-xs font-bold text-slate-800 shadow-md flex items-center gap-2">
