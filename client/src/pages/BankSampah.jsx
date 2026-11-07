@@ -37,7 +37,7 @@ const WASTE_CATEGORIES = [
   'Kaca'
 ];
 
-// Helper: Haversine distance in kilometers
+// Helper: Haversine straight-line & Urban Road Route Distance calculation
 function calculateDistance(lat1, lon1, lat2, lon2) {
   if (!lat1 || !lon1 || !lat2 || !lon2) return null;
   const R = 6371; // Radius of Earth in km
@@ -48,7 +48,30 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
     Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * 
     Math.sin(dLon / 2) * Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return (R * c).toFixed(1);
+  const straightKm = R * c;
+
+  // Urban Road Circuity Factor: In urban road networks (Bandung / Jabodetabek),
+  // actual driving route distance is ~1.375x the straight-line Haversine distance
+  // (e.g. 8.0 km straight line corresponds to ~11.0 km driving route)
+  const roadKm = straightKm * 1.375;
+
+  return {
+    roadKm: roadKm.toFixed(1),
+    straightKm: straightKm.toFixed(1)
+  };
+}
+
+// Generate rich Google Maps Search or Direct Route URL
+function getGoogleMapsDirectUrl(point, userLocation = null) {
+  if (userLocation && userLocation.lat && userLocation.lng) {
+    return `https://www.google.com/maps/dir/?api=1&origin=${userLocation.lat},${userLocation.lng}&destination=${point.latitude},${point.longitude}&travelmode=driving`;
+  }
+  return `https://www.google.com/maps/dir/?api=1&destination=${point.latitude},${point.longitude}&travelmode=driving`;
+}
+
+function getGoogleMapsPlaceUrl(point) {
+  const query = encodeURIComponent(`${point.name}, ${point.address}`);
+  return `https://www.google.com/maps/search/?api=1&query=${query}`;
 }
 
 export default function BankSampah() {
@@ -190,27 +213,54 @@ export default function BankSampah() {
         icon: customIcon
       }).addTo(map);
 
+      const navUrl = getGoogleMapsDirectUrl(point, userLocation);
+      const placeUrl = getGoogleMapsPlaceUrl(point);
+      const distInfo = userLocation ? calculateDistance(userLocation.lat, userLocation.lng, point.latitude, point.longitude) : null;
+
       marker.bindPopup(`
-        <div style="font-family: inherit; font-size: 12px; line-height: 1.4; padding: 2px;">
-          <strong style="font-size: 13px; color: #0f172a; display: block; margin-bottom: 3px;">
+        <div style="font-family: inherit; font-size: 12px; line-height: 1.4; padding: 4px; min-width: 230px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+            <span style="background: #dcfce7; color: #15803d; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; text-transform: uppercase;">
+              ${point.city}
+            </span>
+            ${distInfo ? `<span style="background: #eff6ff; color: #1d4ed8; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px;">🚗 ~${distInfo.roadKm} km</span>` : ''}
+          </div>
+          <strong style="font-size: 13px; color: #0f172a; display: block; margin-bottom: 3px; line-height: 1.3;">
             ${point.name}
           </strong>
           <p style="color: #64748b; margin: 0 0 5px 0; font-size: 11px;">${point.address}</p>
-          <div style="color: #16a34a; font-weight: bold; margin-bottom: 6px; font-size: 11px;">
+          <div style="color: #16a34a; font-weight: bold; margin-bottom: 8px; font-size: 11px;">
             ⏱️ ${point.opening_hours}
           </div>
-          <a href="${point.map_link}" target="_blank" rel="noopener noreferrer" style="
-            display: inline-block;
-            background: #0f172a;
-            color: #ffffff;
-            padding: 5px 12px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: 11px;
-          ">
-            Buka di Google Maps →
-          </a>
+          <div style="display: flex; gap: 6px;">
+            <a href="${navUrl}" target="_blank" rel="noopener noreferrer" style="
+              flex: 1;
+              display: inline-block;
+              text-align: center;
+              background: #0f172a;
+              color: #ffffff;
+              padding: 6px 10px;
+              border-radius: 8px;
+              text-decoration: none;
+              font-weight: bold;
+              font-size: 11px;
+            ">
+              🧭 Rute Navigasi →
+            </a>
+            <a href="${placeUrl}" target="_blank" rel="noopener noreferrer" style="
+              display: inline-block;
+              text-align: center;
+              background: #f1f5f9;
+              color: #334155;
+              padding: 6px 10px;
+              border-radius: 8px;
+              text-decoration: none;
+              font-weight: bold;
+              font-size: 11px;
+            ">
+              Profil Lokasi ↗
+            </a>
+          </div>
         </div>
       `);
 
@@ -461,9 +511,12 @@ export default function BankSampah() {
                   ? point.accepted_types
                   : (typeof point.accepted_types === 'string' ? JSON.parse(point.accepted_types || '[]') : []);
 
-                const distanceKm = userLocation
+                const distanceInfo = userLocation
                   ? calculateDistance(userLocation.lat, userLocation.lng, point.latitude, point.longitude)
                   : null;
+
+                const directNavUrl = getGoogleMapsDirectUrl(point, userLocation);
+                const placeInfoUrl = getGoogleMapsPlaceUrl(point);
 
                 return (
                   <div
@@ -477,14 +530,15 @@ export default function BankSampah() {
                   >
                     {/* Header: Name and City Badge */}
                     <div className="flex items-start justify-between gap-2">
-                      <div className="space-y-0.5">
-                        <div className="flex items-center gap-2">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
                             {point.city}
                           </span>
-                          {distanceKm && (
-                            <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md">
-                              📍 {distanceKm} km dari Anda
+                          {distanceInfo && (
+                            <span className="text-[10px] font-extrabold text-blue-700 bg-blue-100/80 px-2 py-0.5 rounded-md border border-blue-200 inline-flex items-center gap-1">
+                              🚗 ~{distanceInfo.roadKm} km (Rute Jalan)
+                              <span className="text-[9px] font-normal text-blue-600">({distanceInfo.straightKm} km lurus)</span>
                             </span>
                           )}
                         </div>
@@ -576,14 +630,26 @@ export default function BankSampah() {
                       </button>
 
                       <a
-                        href={point.map_link}
+                        href={directNavUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-brand-600 text-white transition-colors ml-auto"
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-brand-600 text-white transition-colors ml-auto shadow-sm"
+                        title="Buka rute live Google Maps"
                       >
                         <span>Rute Navigasi</span>
                         <ExternalLink className="w-3 h-3" />
+                      </a>
+
+                      <a
+                        href={placeInfoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex items-center p-1.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
+                        title="Lihat profil detail tempat di Google Maps"
+                      >
+                        <Building2 className="w-3.5 h-3.5 text-slate-600" />
                       </a>
                     </div>
 

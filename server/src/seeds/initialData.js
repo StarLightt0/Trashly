@@ -391,79 +391,79 @@ export const initialDropPoints = [
     id: 1,
     name: "Bank Sampah Bersinar (BSB) Pusat",
     city: "Bandung",
-    address: "Jl. Terusan Bojongsoang No. 174B, Baleendah, Bandung",
+    address: "Jl. Terusan Bojongsoang No. 174B, Baleendah, Kabupaten Bandung",
     accepted_types: JSON.stringify(["Plastik", "Kertas", "Kardus", "Logam/Kaleng", "Minyak Jelantah"]),
     opening_hours: "Senin - Sabtu: 08.00 - 16.00 WIB",
     contact_phone: "+62 811-2345-678",
     incentive: "Tabungan Rupiah, Emas Pegadaian, dan Sembako Ramah Lingkungan",
-    latitude: -6.9856,
-    longitude: 107.6321,
-    map_link: "https://maps.google.com/?q=-6.9856,107.6321"
+    latitude: -6.985634,
+    longitude: 107.632145,
+    map_link: "https://www.google.com/maps/search/?api=1&query=Bank+Sampah+Bersinar+Pusat+Bojongsoang+Baleendah+Bandung"
   },
   {
     id: 2,
     name: "Bank Sampah Induk (BSI) Kota Bandung",
     city: "Bandung",
-    address: "Jl. Sadang Serang No. 14, Coblong, Kota Bandung",
+    address: "Jl. Sadang Serang No. 14, Sekeloa, Coblong, Kota Bandung",
     accepted_types: JSON.stringify(["Plastik PET", "Kardus", "Kertas HVS", "Kaleng Aluminium", "Kaca Botol"]),
     opening_hours: "Senin - Jumat: 08.30 - 15.30 WIB",
     contact_phone: "+62 822-1234-5678",
     incentive: "Uang tunai per kilogram atau saldo dompet digital (Gopay/OVO)",
-    latitude: -6.8872,
-    longitude: 107.6254,
-    map_link: "https://maps.google.com/?q=-6.8872,107.6254"
+    latitude: -6.887250,
+    longitude: 107.625410,
+    map_link: "https://www.google.com/maps/search/?api=1&query=Bank+Sampah+Induk+Kota+Bandung+Jl+Sadang+Serang+Coblong"
   },
   {
     id: 3,
     name: "Dropbox E-Waste Dinas Lingkungan Hidup Bandung",
     city: "Bandung",
-    address: "Gedung Balai Kota Bandung, Jl. Wastukencana No. 2, Bandung",
+    address: "Gedung Balai Kota Bandung, Jl. Wastukencana No. 2, Kota Bandung",
     accepted_types: JSON.stringify(["E-Waste", "Baterai Bekas", "Lampu Neon", "Kabel & Charger", "Ponsel Rusak"]),
     opening_hours: "Senin - Jumat: 08.00 - 16.00 WIB",
     contact_phone: "+62 22 423-2287",
     incentive: "Lencana Resmi Eco Hero & Penanganan Limbah B3 Bersertifikasi",
-    latitude: -6.9115,
-    longitude: 107.6083,
-    map_link: "https://maps.google.com/?q=-6.9115,107.6083"
+    latitude: -6.911520,
+    longitude: 107.608350,
+    map_link: "https://www.google.com/maps/search/?api=1&query=Balai+Kota+Bandung+Jl+Wastukencana+No+2"
   },
   {
     id: 4,
     name: "Bank Sampah Induk Satu Hati Jakarta",
     city: "Jakarta",
-    address: "Jl. Rawasari Barat No. 20, Cempaka Putih, Jakarta Pusat",
+    address: "Jl. Rawasari Barat No. 20, Cempaka Putih Timur, Jakarta Pusat",
     accepted_types: JSON.stringify(["Plastik", "Kertas", "Minyak Jelantah", "Logam", "Elektronik Kecil"]),
     opening_hours: "Senin - Sabtu: 08.00 - 15.00 WIB",
     contact_phone: "+62 813-8899-7766",
     incentive: "Pencairan Tabungan Bank DKI & Konversi Emas Antam",
-    latitude: -6.1832,
-    longitude: 106.8672,
-    map_link: "https://maps.google.com/?q=-6.1832,106.8672"
+    latitude: -6.183210,
+    longitude: 106.867230,
+    map_link: "https://www.google.com/maps/search/?api=1&query=Bank+Sampah+Induk+Satu+Hati+Rawasari+Barat+Jakarta+Pusat"
   },
   {
     id: 5,
     name: "Bank Sampah Induk Surabaya (BSI Surabaya)",
     city: "Surabaya",
-    address: "Jl. Ngagel Tirto II No. 35, Wonokromo, Surabaya",
+    address: "Jl. Ngagel Tirto II No. 35, Wonokromo, Kota Surabaya",
     accepted_types: JSON.stringify(["Plastik", "Kardus", "Kaleng", "Minyak Jelantah", "Botol Kaca"]),
     opening_hours: "Selasa - Minggu: 08.30 - 16.00 WIB",
     contact_phone: "+62 856-4321-9876",
     incentive: "Buku Tabungan Lingkungan & Pembayaran Tagihan Listrik PLN",
-    latitude: -7.2941,
-    longitude: 112.7533,
-    map_link: "https://maps.google.com/?q=-7.2941,112.7533"
+    latitude: -7.294120,
+    longitude: 112.753340,
+    map_link: "https://www.google.com/maps/search/?api=1&query=Bank+Sampah+Induk+Surabaya+Ngagel+Tirto+Wonokromo"
   },
   {
     id: 6,
     name: "Komunitas Olah Jelantah & Eco-Enzyme Parahyangan",
     city: "Cimahi",
-    address: "Jl. Kolonel Masturi No. 88, Cimahi Utara",
+    address: "Jl. Kolonel Masturi No. 88, Cipageran, Cimahi Utara, Kota Cimahi",
     accepted_types: JSON.stringify(["Minyak Jelantah", "Sisa Sayur & Kulit Buah", "Kardus"]),
     opening_hours: "Rabu, Sabtu & Minggu: 09.00 - 17.00 WIB",
     contact_phone: "+62 812-9988-1122",
     incentive: "Tukar dengan Sabun Alami Eco-Enzyme & Uang Tunai Rp 6.000/liter",
-    latitude: -6.8711,
-    longitude: 107.5452,
-    map_link: "https://maps.google.com/?q=-6.8711,107.5452"
+    latitude: -6.871140,
+    longitude: 107.545210,
+    map_link: "https://www.google.com/maps/search/?api=1&query=Jl+Kolonel+Masturi+No+88+Cimahi+Utara"
   },
   {
     id: 7,
@@ -474,9 +474,9 @@ export const initialDropPoints = [
     opening_hours: "Senin - Sabtu: 08.30 - 16.30 WIB",
     contact_phone: "+62 821-4455-6677",
     incentive: "Poin Trashly Tambahan, Tabungan Tunai, & Diskon Alat Tulis Kampus",
-    latitude: -6.9532,
-    longitude: 107.6358,
-    map_link: "https://maps.google.com/?q=-6.9532,107.6358"
+    latitude: -6.953210,
+    longitude: 107.635820,
+    map_link: "https://www.google.com/maps/search/?api=1&query=Jl+Terusan+Buahbatu+No+48+Bandung"
   },
   {
     id: 8,
@@ -487,8 +487,8 @@ export const initialDropPoints = [
     opening_hours: "Setiap Hari: 09.00 - 17.00 WIB",
     contact_phone: "+62 813-7788-9900",
     incentive: "Voucher Kedai Kopi Dago, Bibit Tanaman Gratis, & Uang Tunai Kilat",
-    latitude: -6.8745,
-    longitude: 107.6162,
-    map_link: "https://maps.google.com/?q=-6.8745,107.6162"
+    latitude: -6.874530,
+    longitude: 107.616210,
+    map_link: "https://www.google.com/maps/search/?api=1&query=Jl+Ir+H+Juanda+No+195+Dago+Bandung"
   }
 ];
