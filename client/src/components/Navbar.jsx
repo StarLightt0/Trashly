@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import BrandLogo from './BrandLogo';
 import { 
   Recycle, 
   BookOpen, 
@@ -44,18 +45,8 @@ export default function Navbar() {
         <div className="flex justify-between h-16 items-center">
           
           {/* Logo & Brand */}
-          <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-emerald-400 flex items-center justify-center text-white shadow-md shadow-brand-500/20 group-hover:scale-105 transition-transform">
-              <Recycle className="w-6 h-6 animate-spin-slow" />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-extrabold text-xl tracking-tight text-slate-800">
-                Trash<span className="text-brand-600">ly</span>
-              </span>
-              <span className="text-[10px] font-medium text-slate-400 tracking-wider uppercase -mt-1">
-                Edukasi & Pilah Sampah
-              </span>
-            </div>
+          <Link to="/" className="flex items-center group py-1" aria-label="Beranda Trashly">
+            <BrandLogo variant="dark" size="md" className="group-hover:scale-105 transition-transform" />
           </Link>
 
           {/* Desktop Navigation Links */}

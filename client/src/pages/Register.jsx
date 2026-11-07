@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Recycle, UserPlus, Lock, Mail, User, Eye, EyeOff, AlertCircle, Sparkles, CheckCircle2 } from 'lucide-react';
+import BrandLogo from '../components/BrandLogo';
+import { UserPlus, Lock, Mail, User, Eye, EyeOff, AlertCircle, Sparkles, CheckCircle2 } from 'lucide-react';
 
 export default function Register() {
   const [name, setName] = useState('');
@@ -46,11 +47,11 @@ export default function Register() {
       <div className="max-w-md w-full space-y-8 bg-white p-8 sm:p-10 rounded-3xl border border-slate-200/80 shadow-xl shadow-slate-200/50">
         
         {/* Brand header */}
-        <div className="text-center space-y-2">
-          <div className="w-12 h-12 bg-gradient-to-tr from-brand-600 to-emerald-400 rounded-2xl flex items-center justify-center text-white mx-auto shadow-md shadow-brand-500/20">
-            <Recycle className="w-7 h-7" />
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+        <div className="text-center space-y-3">
+          <Link to="/" className="inline-block hover:opacity-90 transition-opacity" aria-label="Beranda Trashly">
+            <BrandLogo variant="dark" size="lg" className="mx-auto" />
+          </Link>
+          <h2 className="text-xl sm:text-2xl font-bold text-slate-800 tracking-tight">
             Gabung Jadi <span className="text-brand-600">Eco Warrior</span>
           </h2>
           <p className="text-xs sm:text-sm text-slate-500">

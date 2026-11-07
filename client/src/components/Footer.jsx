@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Recycle, Heart, Shield, Globe } from 'lucide-react';
+import { Heart, Shield, Globe } from 'lucide-react';
+import BrandLogo from './BrandLogo';
 
 export default function Footer() {
   return (
@@ -10,14 +11,9 @@ export default function Footer() {
           
           {/* Brand & Mission */}
           <div className="md:col-span-2 space-y-4">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-brand-500 flex items-center justify-center text-white shadow-md shadow-brand-500/20">
-                <Recycle className="w-5 h-5" />
-              </div>
-              <span className="font-extrabold text-2xl text-white tracking-tight">
-                Trash<span className="text-brand-400">ly</span>
-              </span>
-            </div>
+            <Link to="/" className="inline-block hover:opacity-90 transition-opacity" aria-label="Beranda Trashly">
+              <BrandLogo variant="light" size="lg" />
+            </Link>
             <p className="text-sm text-slate-400 max-w-md leading-relaxed">
               Platform edukasi interaktif pengelolaan sampah untuk generasi sadar lingkungan. 
               Membantu memilah sampah dari rumah, mengurangi beban TPA, dan mewujudkan masa depan sirkular Indonesia.
