@@ -17,7 +17,8 @@ import {
   Award,
   Calculator,
   MapPin,
-  Camera
+  Camera,
+  ShieldCheck
 } from 'lucide-react';
 
 export default function Navbar() {
@@ -147,7 +148,19 @@ export default function Navbar() {
           {/* User Section / Auth Buttons */}
           <div className="hidden md:flex items-center gap-3">
             {isAuthenticated ? (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5">
+                {/* Admin Link if role is admin */}
+                {user?.role === 'admin' && (
+                  <Link
+                    to="/admin"
+                    title="Buka Admin Control Panel"
+                    className="flex items-center gap-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200/80 px-3 py-1.5 rounded-full text-xs font-bold transition shadow-xs"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5 text-purple-600" />
+                    <span>Admin Panel</span>
+                  </Link>
+                )}
+
                 {/* Eco Points Badge */}
                 <Link
                   to="/profil"
@@ -312,6 +325,16 @@ export default function Navbar() {
           <div className="pt-3 border-t border-slate-100">
             {isAuthenticated ? (
               <div className="space-y-3">
+                {user?.role === 'admin' && (
+                  <Link
+                    to="/admin"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center justify-center gap-2 w-full py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-xl text-xs font-bold transition shadow-2xs"
+                  >
+                    <ShieldCheck className="w-4 h-4 text-purple-600" />
+                    Buka Admin Control Panel
+                  </Link>
+                )}
                 <Link
                   to="/profil"
                   onClick={() => setMobileMenuOpen(false)}

@@ -80,9 +80,6 @@ export default function Home() {
                 >
                   <Camera className="w-5 h-5 text-emerald-200" />
                   <span>Scan AI Sampah</span>
-                  <span className="px-1.5 py-0.5 bg-white text-emerald-700 rounded-md text-[10px] font-black tracking-wider uppercase">
-                    Baru
-                  </span>
                 </Link>
 
                 <Link

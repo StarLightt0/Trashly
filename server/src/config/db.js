@@ -31,6 +31,19 @@ export const inMemoryStore = {
   isUsingFallback: false,
   users: [
     {
+      id: 99,
+      name: "Admin Trashly",
+      email: "admin@trashly.id",
+      password: "$2a$10$PCUzdZ0Q1LIlEkZ0yqag2./ONRNQ.hjlwuz7GGl07MkPRSi9Q7ucC", // "password123"
+      role: "admin",
+      points: 9999,
+      avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=AdminTrashly",
+      bio: "Administrator & Pengelola Sistem Trashly 🌱",
+      phone: "081234567899",
+      institution: "Trashly Core Team",
+      created_at: new Date(Date.now() - 86400000 * 30)
+    },
+    {
       id: 1,
       name: "Rian Pratama",
       email: "rian@trashly.id",
@@ -338,8 +351,9 @@ export async function initDatabase() {
     // 9. Seed demo users
     for (const u of inMemoryStore.users) {
       await pool.query(
-        `INSERT IGNORE INTO users (id, name, email, password, role, points, avatar, bio, phone, institution) 
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO users (id, name, email, password, role, points, avatar, bio, phone, institution) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE role = VALUES(role)`,
         [u.id, u.name, u.email, u.password, u.role, u.points, u.avatar, u.bio || 'Pecinta lingkungan aktif & siap memilah sampah untuk bumi yang lebih hijau 🌱', u.phone || '081234567890', u.institution || 'Universitas Teknologi Bandung']
       );
     }

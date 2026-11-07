@@ -61,4 +61,25 @@ export const chatAPI = {
   send: (message, history = []) => api.post('/chat', { message, history })
 };
 
+export const adminAPI = {
+  getDashboardStats: () => api.get('/admin/dashboard/stats'),
+  getSystemStatus: () => api.get('/admin/system/status'),
+  getWasteItems: (params) => api.get('/admin/waste', { params }),
+  createWasteItem: (data) => api.post('/admin/waste', data),
+  updateWasteItem: (id, data) => api.put(`/admin/waste/${id}`, data),
+  deleteWasteItem: (id) => api.delete(`/admin/waste/${id}`),
+  getDropPoints: () => api.get('/admin/drop-points'),
+  createDropPoint: (data) => api.post('/admin/drop-points', data),
+  updateDropPoint: (id, data) => api.put(`/admin/drop-points/${id}`, data),
+  deleteDropPoint: (id) => api.delete(`/admin/drop-points/${id}`),
+  getQuizzes: () => api.get('/admin/quizzes'),
+  createQuiz: (data) => api.post('/admin/quizzes', data),
+  deleteQuiz: (id) => api.delete(`/admin/quizzes/${id}`),
+  getScans: () => api.get('/admin/scans'),
+  deleteScan: (id) => api.delete(`/admin/scans/${id}`),
+  getUsers: (params) => api.get('/admin/users', { params }),
+  updateUserRole: (id, role) => api.put(`/admin/users/${id}/role`, { role }),
+  adjustUserPoints: (id, amount, reason) => api.post(`/admin/users/${id}/adjust-points`, { amount, reason })
+};
+
 export default api;

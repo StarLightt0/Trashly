@@ -9,6 +9,7 @@ import userRoutes from './routes/userRoutes.js';
 import dropPointRoutes from './routes/dropPointRoutes.js';
 import scanRoutes from './routes/scanRoutes.js';
 import chatRoutes from './routes/chatRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 
 dotenv.config();
 
@@ -43,6 +44,7 @@ app.use('/api/user', userRoutes);
 app.use('/api/drop-points', dropPointRoutes);
 app.use('/api/scan', scanRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Root route
 app.get('/', (req, res) => {
@@ -73,6 +75,15 @@ app.get('/', (req, res) => {
       ],
       chat: [
         'POST /api/chat'
+      ],
+      admin: [
+        'GET /api/admin/dashboard/stats',
+        'GET /api/admin/waste',
+        'POST /api/admin/waste',
+        'GET /api/admin/drop-points',
+        'GET /api/admin/quizzes',
+        'GET /api/admin/scans',
+        'GET /api/admin/users'
       ],
       health: 'GET /api/health'
     }
