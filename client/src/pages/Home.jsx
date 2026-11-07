@@ -12,7 +12,10 @@ import {
   CheckCircle2, 
   TrendingUp, 
   Award,
-  Search
+  Search,
+  Camera,
+  Scan,
+  Zap
 } from 'lucide-react';
 import { wasteAPI } from '../services/api';
 
@@ -70,10 +73,21 @@ export default function Home() {
               </p>
 
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-2">
+              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5 pt-2 flex-wrap">
+                <Link
+                  to="/scan"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/30 hover:-translate-y-0.5 transition-all ring-2 ring-emerald-400/40"
+                >
+                  <Camera className="w-5 h-5 text-emerald-200" />
+                  <span>Scan AI Sampah</span>
+                  <span className="px-1.5 py-0.5 bg-white text-emerald-700 rounded-md text-[10px] font-black tracking-wider uppercase">
+                    Baru
+                  </span>
+                </Link>
+
                 <Link
                   to="/ensiklopedia"
-                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-7 py-3.5 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl shadow-lg shadow-brand-600/30 hover:shadow-brand-600/50 hover:-translate-y-0.5 transition-all"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl shadow-lg shadow-brand-600/30 hover:shadow-brand-600/50 hover:-translate-y-0.5 transition-all"
                 >
                   <BookOpen className="w-5 h-5" />
                   Jelajahi Ensiklopedia
@@ -81,11 +95,10 @@ export default function Home() {
                 </Link>
 
                 <Link
-                  to="/kuis"
-                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-7 py-3.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-lg hover:-translate-y-0.5 transition-all"
+                  to="/bank-sampah"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3.5 bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 font-bold rounded-xl shadow-sm hover:-translate-y-0.5 transition-all"
                 >
-                  <Sparkles className="w-5 h-5 text-amber-300" />
-                  Main Kuis Pilah
+                  <span>Cari Bank Sampah</span>
                 </Link>
               </div>
 
@@ -181,6 +194,102 @@ export default function Home() {
             <div className="space-y-2 pt-6 md:pt-0">
               <div className="text-4xl sm:text-5xl font-black text-blue-400">+50 Poin</div>
               <p className="text-sm text-slate-400">Bonus awal pendaftaran untuk aksi nyata peduli bumi</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* AI Scanner Feature Highlight Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-950 via-slate-900 to-teal-950 border border-emerald-500/20 p-8 sm:p-12 shadow-2xl">
+          <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+          <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+          <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            {/* Left Content */}
+            <div className="lg:col-span-7 space-y-5 text-white">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-bold tracking-wide">
+                <Zap className="w-3.5 h-3.5 text-amber-300" />
+                Fitur Unggulan Hackathon
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight leading-tight">
+                Bingung Mau Buang ke Mana? <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">
+                  Scan & Deteksi dengan AI Pintar
+                </span>
+              </h2>
+              <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
+                Cukup arahkan kamera smartphone atau upload foto sampah. AI Trashly akan otomatis mengenali jenis material, menentukan warna tempat sampah resmi (Organik, Anorganik, B3, Residu, E-Waste), estimasi harga jual di Bank Sampah, serta memberi Anda <strong>+15 Eco-Points</strong>!
+              </p>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2 text-xs">
+                <div className="p-3 bg-white/5 rounded-xl border border-white/10">
+                  <div className="font-bold text-emerald-400">⚡ Deteksi Instan</div>
+                  <div className="text-slate-400 mt-0.5">Kamera Live & Upload</div>
+                </div>
+                <div className="p-3 bg-white/5 rounded-xl border border-white/10">
+                  <div className="font-bold text-teal-400">🎯 Warna Tong Resmi</div>
+                  <div className="text-slate-400 mt-0.5">Sesuai Standar KLHK</div>
+                </div>
+                <div className="p-3 bg-white/5 rounded-xl border border-white/10 col-span-2 sm:col-span-1">
+                  <div className="font-bold text-amber-400">💎 Reward Poin</div>
+                  <div className="text-slate-400 mt-0.5">+15 Poin tiap scan</div>
+                </div>
+              </div>
+
+              <div className="pt-2 flex flex-wrap items-center gap-3">
+                <Link
+                  to="/scan"
+                  className="inline-flex items-center gap-2 px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black rounded-xl shadow-lg shadow-emerald-500/20 hover:scale-105 transition-all text-sm"
+                >
+                  <Camera className="w-4 h-4" />
+                  Mulai Scan Sampah Sekarang
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+                <span className="text-xs text-slate-400">
+                  Tersedia 6 sampel uji coba 1-klik tanpa kamera
+                </span>
+              </div>
+            </div>
+
+            {/* Right Mockup Preview */}
+            <div className="lg:col-span-5 flex justify-center">
+              <div className="relative w-full max-w-sm rounded-2xl bg-slate-900 border border-emerald-500/30 p-5 shadow-2xl space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2.5 h-2.5 rounded-full bg-rose-500"></div>
+                    <div className="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
+                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+                  </div>
+                  <span className="text-[11px] font-mono text-emerald-400">Trashly Vision AI v2.0</span>
+                </div>
+
+                <div className="relative aspect-video rounded-xl bg-slate-950 border border-dashed border-emerald-500/40 flex items-center justify-center overflow-hidden">
+                  <img
+                    src="https://images.unsplash.com/photo-1574974671999-24b7dfba0d53?auto=format&fit=crop&w=600&q=80"
+                    alt="Sample Bottle"
+                    className="w-full h-full object-cover opacity-80"
+                  />
+                  <div className="absolute inset-0 bg-emerald-950/20"></div>
+                  {/* Laser line simulation */}
+                  <div className="absolute inset-x-0 top-1/2 h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent shadow-[0_0_10px_#10b981]"></div>
+                  <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-emerald-600/90 text-[10px] text-white font-bold backdrop-blur">
+                    98.4% Confidence
+                  </div>
+                </div>
+
+                <div className="p-3 bg-emerald-900/30 border border-emerald-500/30 rounded-xl space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-white">Botol Plastik PET</span>
+                    <span className="px-2 py-0.5 rounded bg-blue-500/20 text-blue-300 font-bold text-[10px]">
+                      Tong Biru (Anorganik)
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-emerald-300">
+                    Harga Bank Sampah: <span className="font-bold text-white">Rp 3.500 - 5.000 / kg</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

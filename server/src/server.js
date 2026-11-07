@@ -7,15 +7,18 @@ import wasteRoutes from './routes/wasteRoutes.js';
 import quizRoutes from './routes/quizRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import dropPointRoutes from './routes/dropPointRoutes.js';
+import scanRoutes from './routes/scanRoutes.js';
+import chatRoutes from './routes/chatRoutes.js';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
 
 // Middlewares
 app.use(cors({
-  origin: '*', // Can be restricted to client URL in production
+  origin: clientUrl,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
@@ -38,6 +41,8 @@ app.use('/api/waste', wasteRoutes);
 app.use('/api/quizzes', quizRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/drop-points', dropPointRoutes);
+app.use('/api/scan', scanRoutes);
+app.use('/api/chat', chatRoutes);
 
 // Root route
 app.get('/', (req, res) => {
@@ -60,6 +65,14 @@ app.get('/', (req, res) => {
       user: [
         'GET /api/user/dashboard',
         'PUT /api/user/profile'
+      ],
+      scan: [
+        'GET /api/scan/samples',
+        'POST /api/scan/detect',
+        'GET /api/scan/history'
+      ],
+      chat: [
+        'POST /api/chat'
       ],
       health: 'GET /api/health'
     }

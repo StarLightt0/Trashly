@@ -16,7 +16,8 @@ import {
   HelpCircle,
   Award,
   Calculator,
-  MapPin
+  MapPin,
+  Camera
 } from 'lucide-react';
 
 export default function Navbar() {
@@ -92,6 +93,21 @@ export default function Navbar() {
             >
               <MapPin className="w-4 h-4 text-emerald-600" />
               Bank Sampah
+            </Link>
+
+            <Link
+              to="/scan"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                isActive('/scan')
+                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 ring-2 ring-emerald-500/30'
+                  : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200'
+              }`}
+            >
+              <Camera className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Scan AI</span>
+              <span className="px-1.5 py-0.5 rounded-full bg-emerald-500 text-white text-[9px] font-black uppercase tracking-wider">
+                Baru
+              </span>
             </Link>
 
             <Link
@@ -250,6 +266,22 @@ export default function Navbar() {
           >
             <MapPin className="w-4 h-4 text-emerald-600" />
             Bank Sampah & Peta
+          </Link>
+
+          <Link
+            to="/scan"
+            onClick={() => setMobileMenuOpen(false)}
+            className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-bold ${
+              isActive('/scan') ? 'text-emerald-700 bg-emerald-100' : 'text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <Camera className="w-4 h-4 text-emerald-600" />
+              <span>Scan & Deteksi AI</span>
+            </div>
+            <span className="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider">
+              Baru
+            </span>
           </Link>
 
           <Link

@@ -51,4 +51,14 @@ export const dropPointAPI = {
   getDropPointDetail: (id) => api.get(`/drop-points/${id}`)
 };
 
+export const scanAPI = {
+  detectWaste: (data) => api.post('/scan/detect', data),
+  getSamples: () => api.get('/scan/samples'),
+  getHistory: () => api.get('/scan/history')
+};
+
+export const chatAPI = {
+  send: (message, history = []) => api.post('/chat', { message, history })
+};
+
 export default api;

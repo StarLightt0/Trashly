@@ -12,8 +12,10 @@ import QuizPlay from './pages/QuizPlay';
 import Leaderboard from './pages/Leaderboard';
 import Profile from './pages/Profile';
 import Calculator from './pages/Calculator';
+import ScanAI from './pages/ScanAI';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ChatWidget from './components/ChatWidget';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -35,6 +37,7 @@ export default function App() {
               <Route path="/" element={<Home />} />
               <Route path="/ensiklopedia" element={<Encyclopedia />} />
               <Route path="/ensiklopedia/:id" element={<WasteDetail />} />
+              <Route path="/scan" element={<ScanAI />} />
               <Route path="/bank-sampah" element={<BankSampah />} />
               <Route path="/kuis" element={<QuizList />} />
               <Route path="/kuis/:id" element={<QuizPlay />} />
@@ -47,6 +50,7 @@ export default function App() {
             </Routes>
           </main>
           <Footer />
+          <ChatWidget />
         </div>
       </Router>
     </AuthProvider>

@@ -100,7 +100,8 @@ export const inMemoryStore = {
       total_questions: 5,
       created_at: new Date(Date.now() - 3600000 * 4)
     }
-  ]
+  ],
+  scans: []
 };
 
 export async function initDatabase() {
@@ -257,6 +258,20 @@ export async function initDatabase() {
         latitude DECIMAL(10, 8),
         longitude DECIMAL(11, 8),
         map_link TEXT
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS waste_scans (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NULL,
+        waste_name VARCHAR(255) NOT NULL,
+        category_name VARCHAR(100) NOT NULL,
+        confidence INT NOT NULL,
+        image_url LONGTEXT NULL,
+        points_earned INT DEFAULT 15,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
 
