@@ -1,352 +1,594 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Sparkles, Recycle, Droplets, ShieldCheck, Zap, Info } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import * as THREE from 'three';
+import { 
+  RotateCw, 
+  Scan, 
+  Sparkles, 
+  ShieldCheck, 
+  Droplets, 
+  Maximize2, 
+  Minimize2, 
+  Info,
+  Compass,
+  ArrowRight,
+  Eye
+} from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function Interactive3DBottle() {
-  const containerRef = useRef(null);
-  const [rotate, setRotate] = useState({ x: 0, y: 0 });
-  const [isHovered, setIsHovered] = useState(false);
-  const [activeModel, setActiveModel] = useState('smart'); // 'smart' | 'mineral'
-  const [bottleWeight, setBottleWeight] = useState(210);
-  const [recyclePercent, setRecyclePercent] = useState(60);
-  const [showTip, setShowTip] = useState(false);
-  const [lightPos, setLightPos] = useState({ x: 50, y: 30 });
+  const mountRef = useRef(null);
+  
+  // Interactive UI States
+  const [isAutoRotating, setIsAutoRotating] = useState(true);
+  const [isWireframe, setIsWireframe] = useState(false);
+  const [waterFilled, setWaterFilled] = useState(true);
+  const [bottleCrushed, setBottleCrushed] = useState(false);
+  const [activeInfo, setActiveInfo] = useState('pet'); // 'pet' | 'cap' | 'co2'
 
-  // Mouse move 3D tilt effect
-  const handleMouseMove = (e) => {
-    if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left; // x position within the element.
-    const y = e.clientY - rect.top;  // y position within the element.
+  // References to 3D scene objects to manipulate from React state
+  const sceneRef = useRef(null);
+  const bottleGroupRef = useRef(null);
+  const plasticMeshRef = useRef(null);
+  const waterMeshRef = useRef(null);
+  const capMeshRef = useRef(null);
+  const labelMeshRef = useRef(null);
+  const isDraggingRef = useRef(false);
+  const previousPointerPos = useRef({ x: 0, y: 0 });
+  const momentumRef = useRef({ x: 0, y: 0.005 });
 
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-
-    const rotX = -((y - centerY) / centerY) * 14; // max 14 deg tilt
-    const rotY = ((x - centerX) / centerX) * 16;  // max 16 deg tilt
-
-    setRotate({ x: rotX, y: rotY });
-    setLightPos({
-      x: Math.round((x / rect.width) * 100),
-      y: Math.round((y / rect.height) * 100)
-    });
-  };
-
-  const handleMouseLeave = () => {
-    setIsHovered(false);
-    setRotate({ x: 0, y: 0 });
-  };
-
-  const handleMouseEnter = () => {
-    setIsHovered(true);
-  };
-
-  // Subtle natural floating animation when not hovered
-  const [floatOffset, setFloatOffset] = useState(0);
   useEffect(() => {
-    let frameId;
-    let time = 0;
-    const animate = () => {
-      time += 0.03;
-      setFloatOffset(Math.sin(time) * 6);
-      frameId = requestAnimationFrame(animate);
+    const container = mountRef.current;
+    if (!container) return;
+
+    // 1. Scene, Camera, Renderer Setup
+    const width = container.clientWidth || 440;
+    const height = container.clientHeight || 520;
+
+    const scene = new THREE.Scene();
+    sceneRef.current = scene;
+
+    const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 1000);
+    camera.position.set(0, 0.3, 8.5);
+
+    const renderer = new THREE.WebGLRenderer({ 
+      antialias: true, 
+      alpha: true,
+      powerPreference: 'high-performance'
+    });
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+
+    // Clear existing canvas if any
+    container.innerHTML = '';
+    container.appendChild(renderer.domElement);
+
+    // 2. Studio Lighting Rig for Realistic Glass/Plastic PBR
+    // Main key light
+    const keyLight = new THREE.DirectionalLight(0xffffff, 2.2);
+    keyLight.position.set(5, 8, 6);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.width = 1024;
+    keyLight.shadow.mapSize.height = 1024;
+    scene.add(keyLight);
+
+    // Cyan/Sky Blue rim backlight for edge highlights (Fresnel reflection)
+    const rimLight = new THREE.DirectionalLight(0x38bdf8, 3.5);
+    rimLight.position.set(-6, 3, -5);
+    scene.add(rimLight);
+
+    // Soft emerald fill light for eco brand atmosphere
+    const fillLight = new THREE.DirectionalLight(0x10b981, 1.2);
+    fillLight.position.set(6, -3, 3);
+    scene.add(fillLight);
+
+    // Ambient light
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
+    scene.add(ambientLight);
+
+    // 3. Create Master Bottle Group
+    const bottleGroup = new THREE.Group();
+    bottleGroupRef.current = bottleGroup;
+    bottleGroup.position.set(0, -0.15, 0);
+    scene.add(bottleGroup);
+
+    // 4. Construct LatheGeometry for Realistic Ribbed Mineral Bottle Profile
+    const profilePoints = [
+      new THREE.Vector2(0.0, -3.0),
+      new THREE.Vector2(0.85, -2.96),
+      new THREE.Vector2(1.15, -2.85),
+      new THREE.Vector2(1.18, -2.6),
+      // Lower grip ribs
+      new THREE.Vector2(1.1, -2.3),
+      new THREE.Vector2(1.22, -2.0),
+      new THREE.Vector2(1.12, -1.8),
+      new THREE.Vector2(1.22, -1.6),
+      new THREE.Vector2(1.12, -1.4),
+      // Smooth label cylindrical section
+      new THREE.Vector2(1.2, -1.2),
+      new THREE.Vector2(1.2, 0.4),
+      // Upper grip ribs
+      new THREE.Vector2(1.12, 0.6),
+      new THREE.Vector2(1.22, 0.8),
+      new THREE.Vector2(1.12, 1.0),
+      new THREE.Vector2(1.22, 1.2),
+      // Conical tapered shoulder
+      new THREE.Vector2(1.2, 1.4),
+      new THREE.Vector2(1.05, 1.7),
+      new THREE.Vector2(0.85, 2.0),
+      new THREE.Vector2(0.58, 2.25),
+      new THREE.Vector2(0.44, 2.45),
+      // Collar / Flange Ring
+      new THREE.Vector2(0.52, 2.5),
+      new THREE.Vector2(0.44, 2.55),
+      // Neck cylinder
+      new THREE.Vector2(0.42, 2.75),
+      new THREE.Vector2(0.40, 2.95),
+      // Rim lip
+      new THREE.Vector2(0.36, 2.95),
+      new THREE.Vector2(0.34, 2.8)
+    ];
+
+    const plasticGeometry = new THREE.LatheGeometry(profilePoints, 64);
+
+    // Physically Based Clear PET Plastic Material
+    const plasticMaterial = new THREE.MeshPhysicalMaterial({
+      color: 0xf0f9ff,
+      transmission: 0.92,
+      opacity: 1,
+      transparent: true,
+      roughness: 0.06,
+      ior: 1.52, // Exact IOR of PET Plastic
+      reflectivity: 0.7,
+      thickness: 0.4,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.05,
+      attenuationColor: new THREE.Color(0xbae6fd),
+      attenuationDistance: 2.5
+    });
+
+    const plasticMesh = new THREE.Mesh(plasticGeometry, plasticMaterial);
+    plasticMesh.castShadow = true;
+    plasticMeshRef.current = plasticMesh;
+    bottleGroup.add(plasticMesh);
+
+    // 5. Liquid Water Mesh inside the Bottle
+    const waterPoints = [
+      new THREE.Vector2(0.0, -2.85),
+      new THREE.Vector2(1.05, -2.8),
+      new THREE.Vector2(1.12, -2.5),
+      new THREE.Vector2(1.13, -1.2),
+      new THREE.Vector2(1.14, 0.4),
+      new THREE.Vector2(1.14, 1.2),
+      new THREE.Vector2(0.95, 1.7),
+      new THREE.Vector2(0.75, 1.95),
+      // Water surface meniscus
+      new THREE.Vector2(0.0, 1.95)
+    ];
+
+    const waterGeometry = new THREE.LatheGeometry(waterPoints, 48);
+    const waterMaterial = new THREE.MeshPhysicalMaterial({
+      color: 0x38bdf8,
+      transmission: 0.88,
+      transparent: true,
+      opacity: 0.95,
+      roughness: 0.02,
+      ior: 1.333, // IOR of Pure Water
+      thickness: 0.8,
+      attenuationColor: new THREE.Color(0x0284c7),
+      attenuationDistance: 1.2
+    });
+
+    const waterMesh = new THREE.Mesh(waterGeometry, waterMaterial);
+    waterMeshRef.current = waterMesh;
+    bottleGroup.add(waterMesh);
+
+    // 6. Screw Cap (Tutup Botol Biru)
+    const capGroup = new THREE.Group();
+    capMeshRef.current = capGroup;
+
+    const capMat = new THREE.MeshStandardMaterial({
+      color: 0x0284c7,
+      roughness: 0.35,
+      metalness: 0.15
+    });
+
+    // Cap outer cylinder with ridges
+    const capCylinder = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.48, 0.48, 0.55, 48),
+      capMat
+    );
+    capCylinder.position.y = 2.85;
+    capCylinder.castShadow = true;
+    capGroup.add(capCylinder);
+
+    // Cap top dome
+    const capTop = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.44, 0.48, 0.12, 48),
+      capMat
+    );
+    capTop.position.y = 3.15;
+    capGroup.add(capTop);
+
+    // Security ring notches
+    const ringMat = new THREE.MeshStandardMaterial({
+      color: 0x0369a1,
+      roughness: 0.4
+    });
+    const securityRing = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.47, 0.47, 0.12, 32),
+      ringMat
+    );
+    securityRing.position.y = 2.52;
+    capGroup.add(securityRing);
+
+    bottleGroup.add(capGroup);
+
+    // 7. Dynamic Canvas Procedural Label Texture
+    const labelCanvas = document.createElement('canvas');
+    labelCanvas.width = 1024;
+    labelCanvas.height = 512;
+    const ctx = labelCanvas.getContext('2d');
+
+    // Gradient background for label
+    const grad = ctx.createLinearGradient(0, 0, 1024, 0);
+    grad.addColorStop(0, '#064e3b');
+    grad.addColorStop(0.2, '#059669');
+    grad.addColorStop(0.5, '#10b981');
+    grad.addColorStop(0.8, '#059669');
+    grad.addColorStop(1, '#064e3b');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 1024, 512);
+
+    // White accent borders
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.lineWidth = 8;
+    ctx.strokeRect(16, 16, 992, 480);
+
+    // Trashly Brand Text
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 64px sans-serif';
+    ctx.fillText('TRASHLY PURE', 80, 160);
+
+    ctx.fillStyle = '#fef08a';
+    ctx.font = 'bold 34px sans-serif';
+    ctx.fillText('600ml • 100% RECYCLABLE BOTTLE', 80, 220);
+
+    // Resin Code PET 1 Box
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+    ctx.fillRect(720, 80, 220, 180);
+    ctx.strokeStyle = '#fef08a';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(720, 80, 220, 180);
+
+    ctx.fillStyle = '#fef08a';
+    ctx.font = 'bold 50px sans-serif';
+    ctx.fillText('♳ PET 1', 745, 160);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 22px sans-serif';
+    ctx.fillText('FOOD GRADE', 760, 215);
+
+    // Barcode and KLHK Standard
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.font = '24px monospace';
+    ctx.fillText('STANDAR KLHK: #2026-PET-RECYCLE', 80, 320);
+    ctx.fillText('+15 ECO-POINTS REWARD DI BANK SAMPAH', 80, 360);
+
+    // Faux Barcode bars
+    ctx.fillStyle = '#ffffff';
+    for (let i = 0; i < 40; i++) {
+      const barW = (i % 3 === 0) ? 6 : 3;
+      ctx.fillRect(720 + (i * 5.5), 300, barW, 90);
+    }
+
+    const labelTexture = new THREE.CanvasTexture(labelCanvas);
+    labelTexture.wrapS = THREE.RepeatWrapping;
+    labelTexture.repeat.set(1, 1);
+
+    const labelGeo = new THREE.CylinderGeometry(1.215, 1.215, 1.45, 64, 1, true);
+    const labelMat = new THREE.MeshStandardMaterial({
+      map: labelTexture,
+      roughness: 0.25,
+      metalness: 0.1,
+      side: THREE.DoubleSide
+    });
+
+    const labelMesh = new THREE.Mesh(labelGeo, labelMat);
+    labelMesh.position.y = -0.4;
+    labelMeshRef.current = labelMesh;
+    bottleGroup.add(labelMesh);
+
+    // 8. Contact Floor Shadow Plane
+    const shadowGeo = new THREE.PlaneGeometry(5, 5);
+    const shadowCanvas = document.createElement('canvas');
+    shadowCanvas.width = 256;
+    shadowCanvas.height = 256;
+    const sCtx = shadowCanvas.getContext('2d');
+    const sGrad = sCtx.createRadialGradient(128, 128, 10, 128, 128, 110);
+    sGrad.addColorStop(0, 'rgba(15, 23, 42, 0.45)');
+    sGrad.addColorStop(0.4, 'rgba(15, 23, 42, 0.2)');
+    sGrad.addColorStop(1, 'transparent');
+    sCtx.fillStyle = sGrad;
+    sCtx.fillRect(0, 0, 256, 256);
+
+    const shadowTex = new THREE.CanvasTexture(shadowCanvas);
+    const shadowMat = new THREE.MeshBasicMaterial({
+      map: shadowTex,
+      transparent: true,
+      depthWrite: false
+    });
+    const shadowPlane = new THREE.Mesh(shadowGeo, shadowMat);
+    shadowPlane.rotation.x = -Math.PI / 2;
+    shadowPlane.position.y = -3.05;
+    scene.add(shadowPlane);
+
+    // 9. Interactive Drag to Rotate 360 Logic
+    const onPointerDown = (e) => {
+      isDraggingRef.current = true;
+      previousPointerPos.current = { x: e.clientX, y: e.clientY };
+      momentumRef.current = { x: 0, y: 0 };
     };
-    frameId = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(frameId);
+
+    const onPointerMove = (e) => {
+      if (!isDraggingRef.current) return;
+      const deltaX = e.clientX - previousPointerPos.current.x;
+      const deltaY = e.clientY - previousPointerPos.current.y;
+
+      const rotY = deltaX * 0.012;
+      const rotX = deltaY * 0.01;
+
+      bottleGroup.rotation.y += rotY;
+      bottleGroup.rotation.x = Math.max(-0.6, Math.min(0.6, bottleGroup.rotation.x + rotX));
+
+      momentumRef.current = { x: rotX * 0.7, y: rotY * 0.7 };
+      previousPointerPos.current = { x: e.clientX, y: e.clientY };
+    };
+
+    const onPointerUp = () => {
+      isDraggingRef.current = false;
+    };
+
+    const dom = renderer.domElement;
+    dom.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+
+    // 10. Animation Render Loop
+    let animId;
+    let floatClock = 0;
+
+    const animate = () => {
+      animId = requestAnimationFrame(animate);
+      floatClock += 0.02;
+
+      // Handle Inertia / Momentum or Auto-Rotation
+      if (!isDraggingRef.current) {
+        if (Math.abs(momentumRef.current.y) > 0.0001 || Math.abs(momentumRef.current.x) > 0.0001) {
+          bottleGroup.rotation.y += momentumRef.current.y;
+          bottleGroup.rotation.x = Math.max(-0.6, Math.min(0.6, bottleGroup.rotation.x + momentumRef.current.x));
+          momentumRef.current.y *= 0.94; // friction damping
+          momentumRef.current.x *= 0.94;
+        } else if (isAutoRotating) {
+          bottleGroup.rotation.y += 0.012; // turntable continuous rotation
+        }
+
+        // Gentle floating hovering oscillation
+        bottleGroup.position.y = -0.15 + Math.sin(floatClock) * 0.08;
+      }
+
+      renderer.render(scene, camera);
+    };
+
+    animate();
+
+    // 11. Handle Container Resize
+    const handleResize = () => {
+      if (!container) return;
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      cancelAnimationFrame(animId);
+      dom.removeEventListener('pointerdown', onPointerDown);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+      window.removeEventListener('resize', handleResize);
+      renderer.dispose();
+    };
   }, []);
 
-  // Micro interaction: Click on smart bin OLED to simulate scanning recycled bottles
-  const handleScanBottle = () => {
-    setBottleWeight(prev => (prev >= 450 ? 120 : prev + 30));
-    setRecyclePercent(prev => (prev >= 95 ? 40 : prev + 5));
+  // Update Wireframe mode
+  useEffect(() => {
+    if (plasticMeshRef.current) {
+      plasticMeshRef.current.material.wireframe = isWireframe;
+    }
+    if (waterMeshRef.current) {
+      waterMeshRef.current.visible = !isWireframe && waterFilled;
+    }
+  }, [isWireframe, waterFilled]);
+
+  // Update Water visibility
+  useEffect(() => {
+    if (waterMeshRef.current) {
+      waterMeshRef.current.visible = waterFilled && !isWireframe;
+    }
+  }, [waterFilled, isWireframe]);
+
+  // Update Crushed scale animation
+  useEffect(() => {
+    if (bottleGroupRef.current) {
+      if (bottleCrushed) {
+        bottleGroupRef.current.scale.set(1.15, 0.45, 1.2);
+        bottleGroupRef.current.rotation.z = 0.15;
+      } else {
+        bottleGroupRef.current.scale.set(1, 1, 1);
+        bottleGroupRef.current.rotation.z = 0;
+      }
+    }
+  }, [bottleCrushed]);
+
+  const resetRotation = () => {
+    if (bottleGroupRef.current) {
+      bottleGroupRef.current.rotation.set(0, 0, 0);
+      momentumRef.current = { x: 0, y: 0.01 };
+    }
   };
 
   return (
-    <div className="relative w-full flex flex-col items-center justify-center select-none">
+    <div className="relative w-full flex flex-col items-center justify-center select-none py-2">
       
-      {/* 3D Model Switcher Pill (Top of Bottle) */}
-      <div className="mb-4 inline-flex items-center p-1 bg-slate-100/90 dark:bg-slate-900/90 backdrop-blur-md rounded-full border border-slate-200/80 dark:border-slate-800 shadow-sm z-20">
+      {/* 3D Model Control Toolbar */}
+      <div className="mb-2 inline-flex items-center gap-1.5 p-1.5 bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200 shadow-md z-30">
         <button
           type="button"
-          onClick={() => setActiveModel('smart')}
-          className={`px-3.5 py-1.5 rounded-full text-[11px] font-bold tracking-wider transition-all cursor-pointer ${
-            activeModel === 'smart'
-              ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs'
-              : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+          onClick={() => setIsAutoRotating(!isAutoRotating)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            isAutoRotating
+              ? 'bg-brand-600 text-white shadow-xs'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
+          title="Putar botol otomatis 360°"
         >
-          🏆 Smart Eco-Receptacle 3D
+          <RotateCw className={`w-3.5 h-3.5 ${isAutoRotating ? 'animate-spin' : ''}`} style={{ animationDuration: '6s' }} />
+          <span>{isAutoRotating ? 'Auto-Spin ON' : 'Putar 360°'}</span>
         </button>
+
         <button
           type="button"
-          onClick={() => setActiveModel('mineral')}
-          className={`px-3.5 py-1.5 rounded-full text-[11px] font-bold tracking-wider transition-all cursor-pointer flex items-center gap-1 ${
-            activeModel === 'mineral'
-              ? 'bg-emerald-600 text-white shadow-xs'
-              : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+          onClick={() => setIsWireframe(!isWireframe)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            isWireframe
+              ? 'bg-purple-600 text-white shadow-xs'
+              : 'text-slate-600 hover:text-purple-600 hover:bg-purple-50'
           }`}
+          title="Mode Wireframe Poligon 3D"
         >
-          <Droplets className="w-3 h-3 text-cyan-300" />
-          Botol Mineral PET 3D
+          <Scan className="w-3.5 h-3.5 text-purple-400" />
+          <span>Wireframe 3D</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setWaterFilled(!waterFilled)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            waterFilled
+              ? 'bg-cyan-600 text-white shadow-xs'
+              : 'text-slate-600 hover:text-cyan-600 hover:bg-cyan-50'
+          }`}
+          title="Kosongkan air sebelum dipilah ke bank sampah"
+        >
+          <Droplets className="w-3.5 h-3.5" />
+          <span>{waterFilled ? 'Ada Air' : 'Kosong'}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setBottleCrushed(!bottleCrushed)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            bottleCrushed
+              ? 'bg-amber-600 text-white shadow-xs'
+              : 'text-slate-600 hover:text-amber-600 hover:bg-amber-50'
+          }`}
+          title="Simulasi remas botol untuk menghemat ruang tempat sampah"
+        >
+          {bottleCrushed ? <Maximize2 className="w-3.5 h-3.5" /> : <Minimize2 className="w-3.5 h-3.5" />}
+          <span>{bottleCrushed ? 'Buka Normal' : 'Remas Botol'}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={resetRotation}
+          className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition cursor-pointer"
+          title="Reset Sudut Pandang"
+        >
+          <Compass className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Main 3D Stage / Viewport */}
-      <div
-        ref={containerRef}
-        onMouseMove={handleMouseMove}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        className="relative w-full max-w-[420px] sm:max-w-[460px] h-[480px] sm:h-[540px] flex items-center justify-center cursor-grab active:cursor-grabbing perspective-[1200px]"
-      >
+      {/* 3D WebGL Canvas Container */}
+      <div className="relative w-full max-w-[440px] sm:max-w-[480px] h-[480px] sm:h-[530px] flex items-center justify-center">
         
-        {/* Ambient Backlight Glow (Cyan/Green soft atmospheric glow matching screenshot) */}
-        <div
-          className="absolute w-72 h-72 sm:w-88 sm:h-88 rounded-full blur-3xl pointer-events-none transition-all duration-700 opacity-60 dark:opacity-40"
-          style={{
-            background: activeModel === 'smart'
-              ? 'radial-gradient(circle, rgba(56, 189, 248, 0.45) 0%, rgba(34, 197, 94, 0.25) 50%, transparent 70%)'
-              : 'radial-gradient(circle, rgba(14, 165, 233, 0.5) 0%, rgba(16, 185, 129, 0.3) 50%, transparent 70%)',
-            transform: `translate(${rotate.y * 1.5}px, ${rotate.x * 1.5}px)`
-          }}
-        ></div>
+        {/* Atmospheric Backlight Glow */}
+        <div className="absolute w-80 h-80 rounded-full bg-radial from-cyan-400/25 via-emerald-300/15 to-transparent blur-3xl pointer-events-none" />
 
-        {/* 3D Transform Object Container */}
+        {/* The Real Three.js Canvas Mount */}
         <div
-          className="relative transition-transform duration-200 ease-out will-change-transform flex flex-col items-center justify-center"
-          style={{
-            transform: `translateY(${isHovered ? 0 : floatOffset}px) rotateX(${rotate.x}deg) rotateY(${rotate.y}deg)`,
-            transformStyle: 'preserve-3d'
-          }}
+          ref={mountRef}
+          className="w-full h-full cursor-grab active:cursor-grabbing relative z-10"
+        />
+
+        {/* Floating Holographic Info HUD Card (Interactive) */}
+        <div className="absolute -left-4 sm:-left-10 top-24 z-20 max-w-[190px] bg-white/95 backdrop-blur-md rounded-2xl p-3.5 shadow-xl border border-slate-200/90 pointer-events-auto transition-transform hover:scale-105">
+          <div className="flex items-center gap-1.5 text-emerald-600 mb-1">
+            <ShieldCheck className="w-4 h-4 flex-shrink-0" />
+            <span className="font-extrabold text-[11px] uppercase tracking-wide">PET Kode 1</span>
+          </div>
+          <p className="text-[10px] text-slate-600 leading-tight">
+            Material Polyethylene Terephthalate murni. 100% dapat didaur ulang menjadi serat tekstil & botol baru.
+          </p>
+          <span className="mt-2 inline-block px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold text-[9px] border border-emerald-200">
+            Nilai Jual: Rp 3.500/kg
+          </span>
+        </div>
+
+        {/* Floating Eco Metrics (Right) */}
+        <div className="absolute -right-4 sm:-right-10 bottom-24 z-20 max-w-[185px] bg-white/95 backdrop-blur-md rounded-2xl p-3.5 shadow-xl border border-slate-200/90 pointer-events-auto transition-transform hover:scale-105">
+          <div className="flex items-center gap-1.5 text-cyan-600 mb-1">
+            <Droplets className="w-4 h-4 flex-shrink-0" />
+            <span className="font-extrabold text-[11px] uppercase tracking-wide">Dampak Pemilahan</span>
+          </div>
+          <div className="text-[10px] text-slate-700 font-semibold space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500">Reduksi Emisi:</span>
+              <span className="font-bold text-emerald-600">-82.5g CO2e</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-slate-500">Hemat Air:</span>
+              <span className="font-bold text-cyan-600">3.0 Liter</span>
+            </div>
+            <div className="flex items-center justify-between pt-0.5 border-t border-slate-100">
+              <span className="text-slate-500">Waktu Urai:</span>
+              <span className="font-bold text-amber-600">450 Tahun</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      {/* Action Buttons Below 3D Bottle */}
+      <div className="mt-2 flex flex-wrap items-center justify-center gap-2.5 z-20">
+        <Link
+          to="/scan"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-600 to-brand-600 hover:from-emerald-700 hover:to-brand-700 text-white rounded-full text-xs font-bold shadow-md shadow-brand-500/20 transition-all hover:scale-105"
         >
+          <Scan className="w-3.5 h-3.5" />
+          <span>Pindai Sampah Botol Nyata</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </Link>
 
-          {/* ================= MODEL 1: SMART RECEPTACLE & GOLD BOTTLE (Matching Screenshot) ================= */}
-          {activeModel === 'smart' && (
-            <div className="relative group/bottle flex flex-col items-center">
-              
-              {/* Bottle Cap (Maroon Textured Cap with Embossed Detail) */}
-              <div 
-                className="w-24 h-16 sm:w-28 sm:h-18 rounded-t-2xl relative shadow-md overflow-hidden z-20"
-                style={{
-                  background: 'linear-gradient(135deg, #881337 0%, #4c0519 50%, #9f1239 100%)',
-                  boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3), 0 4px 8px rgba(0,0,0,0.35)'
-                }}
-              >
-                {/* Cap Ridges Texture */}
-                <div className="absolute inset-0 opacity-25 bg-[repeating-linear-gradient(90deg,transparent,transparent_3px,#000_4px)]"></div>
-                {/* Cap Embossed Logo */}
-                <div className="absolute inset-x-0 bottom-2 text-center text-[8px] font-black tracking-widest text-rose-200/60 uppercase">
-                  TRASHLY
-                </div>
-              </div>
-
-              {/* Cap Neck Ring */}
-              <div 
-                className="w-26 h-3 rounded-sm z-20"
-                style={{
-                  background: 'linear-gradient(90deg, #ca8a04 0%, #fef08a 40%, #a16207 100%)',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                }}
-              ></div>
-
-              {/* Gold Metallic Bottle Body */}
-              <div 
-                className="w-56 h-60 sm:w-64 sm:h-68 rounded-t-[48px] relative overflow-hidden -mt-1 z-10"
-                style={{
-                  background: `radial-gradient(circle at ${lightPos.x}% ${lightPos.y}%, #fef08a 0%, #eab308 25%, #ca8a04 60%, #854d0e 90%, #713f12 100%)`,
-                  boxShadow: 'inset 0 4px 12px rgba(255,255,255,0.6), inset -6px 0 16px rgba(0,0,0,0.4), 0 16px 32px -8px rgba(0,0,0,0.3)'
-                }}
-              >
-                {/* Metallic Brush Texture & Dynamic Light Sweep */}
-                <div 
-                  className="absolute inset-0 pointer-events-none opacity-40 transition-opacity duration-300"
-                  style={{
-                    background: `linear-gradient(${105 + rotate.y * 2}deg, transparent 20%, rgba(255,255,255,0.7) 45%, rgba(255,255,255,0.9) 50%, transparent 65%)`
-                  }}
-                ></div>
-
-                {/* Subtle Surface Texture Scratches */}
-                <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:12px_12px]"></div>
-
-                {/* Red Geometric Mountain Triangle Logo (Exact Match to Screenshot) */}
-                <div className="absolute left-6 bottom-14 flex items-end gap-1 opacity-90 drop-shadow-sm">
-                  {/* Big Left Triangle */}
-                  <div 
-                    className="w-12 h-14"
-                    style={{
-                      clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)',
-                      background: 'linear-gradient(135deg, #b91c1c 0%, #7f1d1d 100%)',
-                      boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.3)'
-                    }}
-                  ></div>
-                  {/* Smaller Right Triangle */}
-                  <div 
-                    className="w-10 h-10 -ml-3"
-                    style={{
-                      clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)',
-                      background: 'linear-gradient(135deg, #991b1b 0%, #450a0a 100%)'
-                    }}
-                  ></div>
-                </div>
-
-                {/* Gold Sheen Reflection highlight */}
-                <div className="absolute top-0 right-8 w-12 h-full bg-white/20 blur-md pointer-events-none"></div>
-              </div>
-
-              {/* Smart Docking Station Receptacle (Matte Black Base) */}
-              <div 
-                className="w-64 sm:w-72 h-44 rounded-b-3xl relative overflow-hidden -mt-6 z-20 border-t border-slate-700/60 flex flex-col items-center justify-between p-3"
-                style={{
-                  background: 'linear-gradient(180deg, #1e293b 0%, #0f172a 40%, #020617 100%)',
-                  boxShadow: '0 20px 40px -10px rgba(0,0,0,0.6), inset 0 2px 4px rgba(255,255,255,0.1)'
-                }}
-              >
-                {/* Digital OLED Sensor Screen */}
-                <button
-                  type="button"
-                  onClick={handleScanBottle}
-                  title="Klik untuk simulasi sensor timbangan cerdas!"
-                  className="mt-1 px-3 py-1 bg-slate-950 rounded-md border border-cyan-500/40 shadow-inner flex items-center gap-2 cursor-pointer hover:border-cyan-400 transition-all group"
-                >
-                  <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></div>
-                  <span className="font-mono text-[10px] font-bold text-cyan-300 tracking-wider">
-                    {bottleWeight} gms • {recyclePercent}%
-                  </span>
-                  <Zap className="w-2.5 h-2.5 text-cyan-400 group-hover:scale-125 transition-transform" />
-                </button>
-
-                {/* Dock Chamber Window with Golden Backlight */}
-                <div className="w-44 h-24 bg-gradient-to-b from-amber-950/40 via-amber-900/20 to-slate-950 rounded-xl border border-amber-500/30 shadow-inner flex items-center justify-center relative overflow-hidden">
-                  <div className="absolute inset-0 bg-radial from-amber-400/10 to-transparent"></div>
-                  {/* Embossed Triangle Logo in Chamber */}
-                  <div className="flex items-center gap-1 opacity-25 scale-75">
-                    <div className="w-8 h-10 bg-amber-400" style={{ clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }}></div>
-                    <div className="w-6 h-7 bg-amber-500 -ml-2" style={{ clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)' }}></div>
-                  </div>
-                  <span className="absolute bottom-1 text-[9px] font-mono font-bold text-amber-300/60 uppercase tracking-widest">
-                    SMART COMPACTOR
-                  </span>
-                </div>
-
-                {/* Dock Base Rim */}
-                <div className="w-full flex justify-between items-center px-3 pt-1 border-t border-slate-800 text-[9px] font-bold text-slate-500">
-                  <span>SENSOR ID #TR-01</span>
-                  <span className="text-emerald-400 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> ONLINE
-                  </span>
-                </div>
-              </div>
-
-              {/* Realistic Contact Shadow */}
-              <div 
-                className="w-56 h-6 rounded-full bg-black/40 blur-md -mt-2 transition-all duration-300 pointer-events-none"
-                style={{
-                  transform: `scale(${isHovered ? 1.08 : 1})`,
-                  opacity: isHovered ? 0.6 : 0.4
-                }}
-              ></div>
-
-            </div>
-          )}
-
-          {/* ================= MODEL 2: BOTOL AIR MINERAL 3D (PET KODE 1) ================= */}
-          {activeModel === 'mineral' && (
-            <div className="relative group/bottle flex flex-col items-center animate-fade-in">
-              
-              {/* Blue Mineral Bottle Cap */}
-              <div 
-                className="w-16 h-10 rounded-t-lg relative shadow-md z-20"
-                style={{
-                  background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 60%, #075985 100%)',
-                  boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.5), 0 3px 6px rgba(0,0,0,0.2)'
-                }}
-              >
-                <div className="absolute inset-0 opacity-25 bg-[repeating-linear-gradient(90deg,transparent,transparent_2px,#000_3px)]"></div>
-              </div>
-
-              {/* Safety Ring Neck */}
-              <div className="w-18 h-2 bg-sky-300 rounded-xs z-20"></div>
-
-              {/* Transparent Ribbed PET Plastic Bottle */}
-              <div 
-                className="w-52 h-76 sm:w-56 sm:h-84 rounded-t-[36px] rounded-b-2xl relative overflow-hidden backdrop-blur-xs z-10 border border-sky-200/50"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(224, 242, 254, 0.45) 0%, rgba(186, 230, 253, 0.25) 50%, rgba(224, 242, 254, 0.5) 100%)',
-                  boxShadow: 'inset 0 0 20px rgba(255,255,255,0.7), inset -4px 0 10px rgba(3, 105, 161, 0.15), 0 16px 32px rgba(0,0,0,0.1)'
-                }}
-              >
-                {/* 3D Cylindrical Contour Ribs */}
-                <div className="absolute inset-x-0 top-12 h-2.5 bg-sky-300/30 border-y border-white/50"></div>
-                <div className="absolute inset-x-0 top-20 h-2.5 bg-sky-300/30 border-y border-white/50"></div>
-                <div className="absolute inset-x-0 top-28 h-2.5 bg-sky-300/30 border-y border-white/50"></div>
-
-                {/* Recycled Water Level Wave */}
-                <div 
-                  className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-cyan-400/40 via-sky-300/25 to-transparent relative overflow-hidden"
-                >
-                  <div className="absolute inset-0 opacity-25 bg-[radial-gradient(circle,#fff_1px,transparent_1px)] [background-size:16px_16px]"></div>
-                </div>
-
-                {/* Eco Label Banner Wrap */}
-                <div className="absolute inset-x-0 top-36 py-3 bg-gradient-to-r from-emerald-600 via-brand-500 to-teal-700 text-white shadow-md flex items-center justify-between px-4 z-20">
-                  <div className="flex items-center gap-1.5">
-                    <Recycle className="w-5 h-5 text-amber-300 animate-spin-slow" />
-                    <div>
-                      <div className="text-[10px] font-black uppercase tracking-wider leading-none">
-                        PET Kode 1
-                      </div>
-                      <div className="text-[8px] text-emerald-100 font-semibold">
-                        100% Recyclable
-                      </div>
-                    </div>
-                  </div>
-                  <span className="text-[9px] font-black bg-white/20 px-2 py-0.5 rounded-full border border-white/40">
-                    450 Thn Urai
-                  </span>
-                </div>
-
-                {/* Lower Grip Ribs */}
-                <div className="absolute inset-x-0 bottom-12 h-2.5 bg-sky-300/30 border-y border-white/50"></div>
-                <div className="absolute inset-x-0 bottom-6 h-2.5 bg-sky-300/30 border-y border-white/50"></div>
-
-                {/* Specular Light Reflection Sweep */}
-                <div 
-                  className="absolute inset-0 pointer-events-none opacity-60"
-                  style={{
-                    background: `linear-gradient(${115 + rotate.y * 3}deg, transparent 25%, rgba(255,255,255,0.8) 50%, transparent 65%)`
-                  }}
-                ></div>
-
-              </div>
-
-              {/* Botol Mineral Base Contact Shadow */}
-              <div 
-                className="w-48 h-5 rounded-full bg-black/25 blur-md mt-1 transition-all pointer-events-none"
-                style={{ transform: `scale(${isHovered ? 1.1 : 1})` }}
-              ></div>
-
-            </div>
-          )}
-
-        </div>
-
+        <Link
+          to="/ensiklopedia/botol-plastik-pet"
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-full text-xs font-semibold shadow-xs transition-all"
+        >
+          <Info className="w-3.5 h-3.5 text-brand-600" />
+          <span>Panduan Daur Ulang PET</span>
+        </Link>
       </div>
 
-      {/* Floating Bottom Pill Tags (Matching Screenshot Bottom Labels) */}
-      <div className="mt-4 flex flex-wrap items-center justify-center gap-3 z-20">
-        
-        {/* Organik : Daun */}
-        <div className="px-4 py-2 rounded-full bg-white/90 dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold tracking-wider uppercase shadow-xs flex items-center gap-2 hover:border-emerald-500 transition-colors">
-          <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-          <span>ORGANIK : DAUN</span>
-        </div>
-
-        {/* Anorganik : Botol 50 */}
-        <div className="px-4 py-2 rounded-full bg-slate-900 dark:bg-white border border-slate-800 dark:border-slate-200 text-white dark:text-slate-900 text-xs font-bold tracking-wider uppercase shadow-xs flex items-center gap-2 hover:opacity-90 transition-opacity">
-          <span className="w-2 h-2 rounded-full bg-brand-400"></span>
-          <span>ANORGANIK : BOTOL 50</span>
-        </div>
-
-      </div>
+      {/* Drag & Rotation Tip */}
+      <p className="text-[11px] text-slate-400 mt-2 font-medium flex items-center gap-1.5">
+        <Compass className="w-3.5 h-3.5 text-brand-500" />
+        <span>Tarik / Drag objek botol dengan mouse untuk memutar 360° ke segala arah</span>
+      </p>
 
     </div>
   );

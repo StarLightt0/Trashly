@@ -18,6 +18,7 @@ import {
   Zap
 } from 'lucide-react';
 import { wasteAPI } from '../services/api';
+import Interactive3DBottle from '../components/Interactive3DBottle';
 
 export default function Home() {
   const [stats, setStats] = useState({
@@ -116,60 +117,9 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Right Column: Visual Card Highlight */}
-            <div className="lg:col-span-5 relative">
-              <div className="relative mx-auto max-w-md bg-white rounded-3xl p-6 shadow-2xl shadow-slate-200/80 border border-slate-100 space-y-6">
-                
-                {/* Visual badge top */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center">
-                      <Recycle className="w-6 h-6 animate-spin-slow" />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-slate-800">Prinsip 3R</h4>
-                      <p className="text-xs text-slate-400">Reduce, Reuse, Recycle</p>
-                    </div>
-                  </div>
-                  <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold">
-                    Aktif
-                  </span>
-                </div>
-
-                {/* Example interactive preview card */}
-                <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-3">
-                  <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
-                    <span>Fakta Sampah Plastik</span>
-                    <span className="text-rose-500">450 Tahun</span>
-                  </div>
-                  <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
-                    <div className="bg-gradient-to-r from-brand-500 to-emerald-400 h-2.5 rounded-full w-4/5"></div>
-                  </div>
-                  <p className="text-xs text-slate-600 italic">
-                    "Setiap 1 botol plastik yang kamu daur ulang menghemat cukup energi untuk menyalakan lampu bohlam selama 6 jam."
-                  </p>
-                </div>
-
-                {/* Mini quick stat rows */}
-                <div className="grid grid-cols-2 gap-3 pt-2">
-                  <div className="p-3 bg-brand-50/60 rounded-xl border border-brand-100 text-center">
-                    <div className="text-2xl font-black text-brand-700">{stats.recyclablePercentage}%</div>
-                    <div className="text-[11px] text-brand-900 font-medium">Bisa Didaur Ulang</div>
-                  </div>
-                  <div className="p-3 bg-blue-50/60 rounded-xl border border-blue-100 text-center">
-                    <div className="text-2xl font-black text-blue-700">{stats.totalItems}+ Item</div>
-                    <div className="text-[11px] text-blue-900 font-medium">Katalog Ensiklopedia</div>
-                  </div>
-                </div>
-
-                <Link
-                  to="/ensiklopedia"
-                  className="block text-center text-xs font-bold text-brand-700 hover:text-brand-800 bg-brand-100/70 hover:bg-brand-100 py-2.5 rounded-xl transition-colors"
-                >
-                  Cari Sampah di Rumah Anda →
-                </Link>
-
-              </div>
+            {/* Right Column: Realistic Interactive 3D Mineral Bottle */}
+            <div className="lg:col-span-5 relative flex items-center justify-center">
+              <Interactive3DBottle />
             </div>
 
           </div>
