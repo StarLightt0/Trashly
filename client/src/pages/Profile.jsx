@@ -403,6 +403,7 @@ export default function Profile() {
 
   const { user, rankBadge, stats, recentAttempts } = dashboardData;
   const currentAvatar = formData.avatar || user.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.name}`;
+  const isCustomPhoto = currentAvatar && currentAvatar.startsWith('data:image/');
   const progressPercent = Math.min(
     100,
     Math.round((user.points / (rankBadge.targetPoints || 350)) * 100)
@@ -482,12 +483,16 @@ export default function Profile() {
             <div className="relative z-10 flex flex-col items-center">
               
               {/* Avatar Container with Direct Upload Camera Badge */}
-              <div className="relative group mb-4">
-                <img
-                  src={currentAvatar}
-                  alt={formData.name || user.name}
-                  className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl border-4 border-brand-100 bg-slate-50 shadow-md object-cover"
-                />
+              <div className="relative group mb-3">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border-2 sm:border-3 border-brand-200 bg-slate-50 shadow-sm overflow-hidden flex items-center justify-center">
+                  <img
+                    src={currentAvatar}
+                    alt={formData.name || user.name}
+                    className={`w-full h-full ${
+                      isCustomPhoto ? 'object-cover' : 'object-contain p-2'
+                    }`}
+                  />
+                </div>
 
                 {/* Upload Photo Hover Overlay */}
                 <button
@@ -495,14 +500,14 @@ export default function Profile() {
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploadingPhoto}
                   title="Klik untuk memilih foto dari perangkat (PNG / JPG, Maks 2 MB)"
-                  className="absolute inset-0 rounded-3xl bg-black/50 text-white flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer backdrop-blur-xs"
+                  className="absolute inset-0 rounded-2xl bg-black/50 text-white flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer backdrop-blur-xs"
                 >
                   {uploadingPhoto ? (
-                    <Loader2 className="w-6 h-6 animate-spin text-white" />
+                    <Loader2 className="w-5 h-5 animate-spin text-white" />
                   ) : (
                     <>
-                      <Camera className="w-6 h-6 mb-1" />
-                      <span className="text-[11px] font-bold">Ganti Foto</span>
+                      <Camera className="w-5 h-5 mb-0.5" />
+                      <span className="text-[10px] font-bold">Ganti</span>
                     </>
                   )}
                 </button>
@@ -513,12 +518,12 @@ export default function Profile() {
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploadingPhoto}
                   title="Pilih foto dari galeri / laptop"
-                  className="absolute -bottom-2 -right-2 p-2.5 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white rounded-2xl shadow-lg border-2 border-white transition-all cursor-pointer z-10"
+                  className="absolute -bottom-1 -right-1 p-2 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white rounded-xl shadow-md border-2 border-white transition-all cursor-pointer z-10"
                 >
                   {uploadingPhoto ? (
-                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
                   ) : (
-                    <Camera className="w-4 h-4" />
+                    <Camera className="w-3.5 h-3.5" />
                   )}
                 </button>
               </div>
@@ -799,15 +804,19 @@ export default function Profile() {
                   </div>
 
                   {/* Device Photo Upload Trigger & Preview */}
-                  <div className="flex flex-col sm:flex-row items-center gap-4 bg-white p-4 rounded-xl border border-slate-200/80">
+                  <div className="flex flex-col sm:flex-row items-center gap-3.5 bg-white p-3.5 rounded-xl border border-slate-200/80">
                     <div className="relative shrink-0">
-                      <img
-                        src={currentAvatar}
-                        alt="Preview Foto"
-                        className="w-16 h-16 rounded-2xl border-2 border-brand-400 bg-slate-50 object-cover shadow-xs"
-                      />
-                      {formData.avatar?.startsWith('data:image/') && (
-                        <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center text-white text-[9px] shadow font-black">
+                      <div className="w-12 h-12 rounded-xl border-2 border-brand-300 bg-slate-50 overflow-hidden flex items-center justify-center shadow-2xs">
+                        <img
+                          src={currentAvatar}
+                          alt="Preview Foto"
+                          className={`w-full h-full ${
+                            isCustomPhoto ? 'object-cover' : 'object-contain p-1'
+                          }`}
+                        />
+                      </div>
+                      {isCustomPhoto && (
+                        <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-emerald-500 rounded-full flex items-center justify-center text-white text-[8px] shadow font-black">
                           ✓
                         </span>
                       )}
@@ -846,7 +855,7 @@ export default function Profile() {
                     <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider">
                       Atau Pilih Karakter Eco-Bot (Preset Dicebear):
                     </label>
-                    <div className="flex flex-wrap items-center gap-2.5">
+                    <div className="flex flex-wrap items-center gap-2">
                       {AVATAR_SEEDS.map((seed) => {
                         const url = `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}`;
                         const isSelected = formData.avatar === url;
@@ -855,14 +864,14 @@ export default function Profile() {
                             key={seed}
                             type="button"
                             onClick={() => handleSelectPresetAvatar(url)}
-                            className={`w-13 h-13 rounded-2xl p-1 border-2 transition-all cursor-pointer ${
+                            className={`w-10 h-10 rounded-xl p-1 border-2 transition-all cursor-pointer ${
                               isSelected
                                 ? 'border-brand-600 bg-brand-50 ring-2 ring-brand-400 scale-105 shadow-sm'
                                 : 'border-slate-200 hover:border-brand-300 bg-white'
                             }`}
                             title={`Gunakan Avatar ${seed}`}
                           >
-                            <img src={url} alt={seed} className="w-full h-full object-cover rounded-xl" />
+                            <img src={url} alt={seed} className="w-full h-full object-contain rounded-lg" />
                           </button>
                         );
                       })}

@@ -47,8 +47,8 @@ export default function Footer() {
                 <Link to="/bank-sampah" className="hover:text-brand-400 transition-colors">Direktori Bank Sampah</Link>
               </li>
               <li>
-                <Link to="/scan" className="text-emerald-400 hover:text-emerald-300 font-medium transition-colors flex items-center gap-1.5">
-                  Scan & Deteksi AI <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-1.5 py-0.2 rounded-full font-bold">Baru</span>
+                <Link to="/scan" className="hover:text-emerald-300 font-medium transition-colors flex items-center gap-1.5">
+                  Scan & Deteksi AI 
                 </Link>
               </li>
               <li>

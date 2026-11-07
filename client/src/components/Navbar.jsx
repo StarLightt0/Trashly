@@ -97,17 +97,14 @@ export default function Navbar() {
 
             <Link
               to="/scan"
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors ${
                 isActive('/scan')
-                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 ring-2 ring-emerald-500/30'
-                  : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200'
+                  ? 'text-brand-600 bg-brand-50 font-semibold' 
+                  : 'text-slate-600 hover:text-brand-600 hover:bg-slate-50'
               }`}
             >
-              <Camera className="w-3.5 h-3.5 text-emerald-600" />
+              <Camera className="w-4 h-4 text-emerald-600" />
               <span>Scan AI</span>
-              <span className="px-1.5 py-0.5 rounded-full bg-emerald-500 text-white text-[9px] font-black uppercase tracking-wider">
-                Baru
-              </span>
             </Link>
 
             <Link
@@ -271,17 +268,12 @@ export default function Navbar() {
           <Link
             to="/scan"
             onClick={() => setMobileMenuOpen(false)}
-            className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-bold ${
-              isActive('/scan') ? 'text-emerald-700 bg-emerald-100' : 'text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200'
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium ${
+              isActive('/scan') ? 'text-brand-600 bg-brand-50 font-bold' : 'text-slate-600 hover:bg-slate-50'
             }`}
           >
-            <div className="flex items-center gap-3">
-              <Camera className="w-4 h-4 text-emerald-600" />
-              <span>Scan & Deteksi AI</span>
-            </div>
-            <span className="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-black uppercase tracking-wider">
-              Baru
-            </span>
+            <Camera className="w-4 h-4" />
+            <span>Scan & Deteksi AI</span>
           </Link>
 
           <Link
