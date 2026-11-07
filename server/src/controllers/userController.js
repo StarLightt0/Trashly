@@ -8,31 +8,40 @@ export async function getDashboard(req, res) {
     let attempts = [];
 
     if (isDbConnected()) {
-      const pool = getPool();
-      const [userRows] = await pool.query(
-        'SELECT * FROM users WHERE id = ?',
-        [userId]
-      );
-      if (userRows.length === 0) {
-        return res.status(404).json({ success: false, message: 'Pengguna tidak ditemukan.' });
-      }
-      const { password, ...safeUser } = userRows[0];
-      user = safeUser;
+      try {
+        const pool = getPool();
+        const [userRows] = await pool.query(
+          'SELECT * FROM users WHERE id = ?',
+          [userId]
+        );
+        if (userRows && userRows.length > 0) {
+          const { password, ...safeUser } = userRows[0];
+          user = safeUser;
 
-      const [attemptRows] = await pool.query(`
-        SELECT 
-          qa.*,
-          q.title as quiz_title,
-          q.slug as quiz_slug,
-          q.badge_name
-        FROM quiz_attempts qa
-        JOIN quizzes q ON qa.quiz_id = q.id
-        WHERE qa.user_id = ?
-        ORDER BY qa.created_at DESC
-        LIMIT 10
-      `, [userId]);
-      attempts = attemptRows;
-    } else {
+          try {
+            const [attemptRows] = await pool.query(`
+              SELECT 
+                qa.*,
+                q.title as quiz_title,
+                q.slug as quiz_slug,
+                q.badge_name
+              FROM quiz_attempts qa
+              JOIN quizzes q ON qa.quiz_id = q.id
+              WHERE qa.user_id = ?
+              ORDER BY qa.created_at DESC
+              LIMIT 10
+            `, [userId]);
+            attempts = attemptRows || [];
+          } catch (e) {
+            attempts = [];
+          }
+        }
+      } catch (dbErr) {
+        console.warn('DB error di getDashboard:', dbErr.message);
+      }
+    }
+
+    if (!user) {
       const u = inMemoryStore.users.find(usr => String(usr.id) === String(userId) || (req.user?.email && usr.email === req.user.email));
       if (!u) {
         return res.status(404).json({ success: false, message: 'Pengguna tidak ditemukan.' });

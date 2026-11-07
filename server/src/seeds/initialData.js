@@ -464,5 +464,31 @@ export const initialDropPoints = [
     latitude: -6.8711,
     longitude: 107.5452,
     map_link: "https://maps.google.com/?q=-6.8711,107.5452"
+  },
+  {
+    id: 7,
+    name: "Bank Sampah Unit Buahbatu Berseri (Area Kampus UTB)",
+    city: "Bandung",
+    address: "Jl. Terusan Buahbatu No. 48, Batununggal, Bandung",
+    accepted_types: JSON.stringify(["Plastik PET", "Kardus & Kertas", "Buku Bekas", "Kaleng Aluminium"]),
+    opening_hours: "Senin - Sabtu: 08.30 - 16.30 WIB",
+    contact_phone: "+62 821-4455-6677",
+    incentive: "Poin Trashly Tambahan, Tabungan Tunai, & Diskon Alat Tulis Kampus",
+    latitude: -6.9532,
+    longitude: 107.6358,
+    map_link: "https://maps.google.com/?q=-6.9532,107.6358"
+  },
+  {
+    id: 8,
+    name: "Bank Sampah Hijau Dago Kreatif",
+    city: "Bandung",
+    address: "Jl. Ir. H. Juanda (Dago Atas) No. 195, Coblong, Kota Bandung",
+    accepted_types: JSON.stringify(["Plastik Botol", "Gelas Kaca", "Kardus", "E-Waste"]),
+    opening_hours: "Setiap Hari: 09.00 - 17.00 WIB",
+    contact_phone: "+62 813-7788-9900",
+    incentive: "Voucher Kedai Kopi Dago, Bibit Tanaman Gratis, & Uang Tunai Kilat",
+    latitude: -6.8745,
+    longitude: 107.6162,
+    map_link: "https://maps.google.com/?q=-6.8745,107.6162"
   }
 ];

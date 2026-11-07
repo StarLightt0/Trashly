@@ -15,7 +15,8 @@ import {
   Trophy,
   HelpCircle,
   Award,
-  Calculator
+  Calculator,
+  MapPin
 } from 'lucide-react';
 
 export default function Navbar() {
@@ -79,6 +80,18 @@ export default function Navbar() {
             >
               <BookOpen className="w-4 h-4" />
               Ensiklopedia
+            </Link>
+
+            <Link
+              to="/bank-sampah"
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-colors ${
+                isActive('/bank-sampah')
+                  ? 'text-brand-600 bg-brand-50 font-semibold' 
+                  : 'text-slate-600 hover:text-brand-600 hover:bg-slate-50'
+              }`}
+            >
+              <MapPin className="w-4 h-4 text-emerald-600" />
+              Bank Sampah
             </Link>
 
             <Link
@@ -226,6 +239,17 @@ export default function Navbar() {
           >
             <BookOpen className="w-4 h-4" />
             Ensiklopedia Sampah
+          </Link>
+
+          <Link
+            to="/bank-sampah"
+            onClick={() => setMobileMenuOpen(false)}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium ${
+              isActive('/bank-sampah') ? 'text-brand-600 bg-brand-50 font-bold' : 'text-slate-600 hover:bg-slate-50'
+            }`}
+          >
+            <MapPin className="w-4 h-4 text-emerald-600" />
+            Bank Sampah & Peta
           </Link>
 
           <Link

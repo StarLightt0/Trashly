@@ -6,6 +6,7 @@ import authRoutes from './routes/authRoutes.js';
 import wasteRoutes from './routes/wasteRoutes.js';
 import quizRoutes from './routes/quizRoutes.js';
 import userRoutes from './routes/userRoutes.js';
+import dropPointRoutes from './routes/dropPointRoutes.js';
 
 dotenv.config();
 
@@ -36,6 +37,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/waste', wasteRoutes);
 app.use('/api/quizzes', quizRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/drop-points', dropPointRoutes);
 
 // Root route
 app.get('/', (req, res) => {
@@ -85,9 +87,9 @@ app.use((err, req, res, next) => {
 // Start Server
 async function startServer() {
   await initDatabase();
-  app.listen(PORT, () => {
-    console.log(`\n🚀 Trashly Server running at http://localhost:${PORT}`);
-    console.log(`🌿 API Health check: http://localhost:${PORT}/api/health\n`);
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`\n🚀 Trashly Server running at http://127.0.0.1:${PORT} (and http://localhost:${PORT})`);
+    console.log(`🌿 API Health check: http://127.0.0.1:${PORT}/api/health\n`);
   });
 }
 

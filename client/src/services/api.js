@@ -46,4 +46,9 @@ export const userAPI = {
   claimCalculatorReward: (data) => api.post('/user/calculator-reward', data || {})
 };
 
+export const dropPointAPI = {
+  getDropPoints: (params) => api.get('/drop-points', { params }),
+  getDropPointDetail: (id) => api.get(`/drop-points/${id}`)
+};
+
 export default api;

@@ -6,6 +6,7 @@ import Footer from './components/Footer';
 import Home from './pages/Home';
 import Encyclopedia from './pages/Encyclopedia';
 import WasteDetail from './pages/WasteDetail';
+import BankSampah from './pages/BankSampah';
 import QuizList from './pages/QuizList';
 import QuizPlay from './pages/QuizPlay';
 import Leaderboard from './pages/Leaderboard';
@@ -34,6 +35,7 @@ export default function App() {
               <Route path="/" element={<Home />} />
               <Route path="/ensiklopedia" element={<Encyclopedia />} />
               <Route path="/ensiklopedia/:id" element={<WasteDetail />} />
+              <Route path="/bank-sampah" element={<BankSampah />} />
               <Route path="/kuis" element={<QuizList />} />
               <Route path="/kuis/:id" element={<QuizPlay />} />
               <Route path="/leaderboard" element={<Leaderboard />} />

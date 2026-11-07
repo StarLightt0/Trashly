@@ -20,7 +20,7 @@ const dbConfig = {
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  connectTimeout: 2000
+  connectTimeout: 10000
 };
 
 let pool = null;
@@ -107,20 +107,24 @@ export async function initDatabase() {
   try {
     console.log(`📡 Mencoba menghubungkan ke MySQL (${dbConfig.host}:${dbConfig.port})...`);
     
-    // 1. Connect without database selected to ensure database exists
-    const rootConnection = await mysql.createConnection({
-      host: dbConfig.host,
-      port: dbConfig.port,
-      user: dbConfig.user,
-      password: dbConfig.password,
-      connectTimeout: dbConfig.connectTimeout
-    });
+    // 1. Ensure database exists if possible (non-blocking if already exists or permission restricted)
+    try {
+      const rootConnection = await mysql.createConnection({
+        host: dbConfig.host,
+        port: dbConfig.port,
+        user: dbConfig.user,
+        password: dbConfig.password,
+        connectTimeout: 5000
+      });
+      await rootConnection.query(`CREATE DATABASE IF NOT EXISTS \`${dbConfig.database}\`;`);
+      await rootConnection.end();
+    } catch (createDbErr) {
+      // Database might already exist or user lacks root privileges; pool connection will verify.
+    }
 
-    await rootConnection.query(`CREATE DATABASE IF NOT EXISTS \`${dbConfig.database}\`;`);
-    await rootConnection.end();
-
-    // 2. Create the connection pool with database selected
+    // 2. Create the connection pool with database selected & test ping
     pool = mysql.createPool(dbConfig);
+    await pool.query('SELECT 1');
 
     // 3. Create tables if not exist
     await pool.query(`
@@ -256,96 +260,72 @@ export async function initDatabase() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
 
-    // 4. Seed initial categories if empty
-    const [existingCategories] = await pool.query('SELECT COUNT(*) as count FROM categories');
-    if (existingCategories[0].count === 0) {
-      console.log('🌱 Melakukan seed kategori sampah awal...');
-      for (const cat of initialCategories) {
-        await pool.query(
-          `INSERT INTO categories (id, name, slug, color, badge_bg, badge_text, description, icon) 
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-          [cat.id, cat.name, cat.slug, cat.color, cat.badge_bg, cat.badge_text, cat.description, cat.icon]
-        );
-      }
+    // 4. Seed initial categories
+    for (const cat of initialCategories) {
+      await pool.query(
+        `INSERT IGNORE INTO categories (id, name, slug, color, badge_bg, badge_text, description, icon) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [cat.id, cat.name, cat.slug, cat.color, cat.badge_bg, cat.badge_text, cat.description, cat.icon]
+      );
     }
 
-    // 5. Seed initial waste items if empty
-    const [existingWaste] = await pool.query('SELECT COUNT(*) as count FROM waste_items');
-    if (existingWaste[0].count === 0) {
-      console.log('🌱 Melakukan seed data ensiklopedia sampah awal...');
-      for (const item of initialWasteItems) {
-        await pool.query(
-          `INSERT INTO waste_items 
-           (id, category_id, name, slug, image_url, decomposition_time, is_recyclable, impact_level, summary, disposal_steps, recycling_potential, danger_notes) 
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            item.id,
-            item.category_id,
-            item.name,
-            item.slug,
-            item.image_url,
-            item.decomposition_time,
-            item.is_recyclable,
-            item.impact_level,
-            item.summary,
-            item.disposal_steps,
-            item.recycling_potential,
-            item.danger_notes
-          ]
-        );
-      }
+    // 5. Seed initial waste items
+    for (const item of initialWasteItems) {
+      await pool.query(
+        `INSERT IGNORE INTO waste_items 
+         (id, category_id, name, slug, image_url, decomposition_time, is_recyclable, impact_level, summary, disposal_steps, recycling_potential, danger_notes) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          item.id,
+          item.category_id,
+          item.name,
+          item.slug,
+          item.image_url,
+          item.decomposition_time,
+          item.is_recyclable,
+          item.impact_level,
+          item.summary,
+          item.disposal_steps,
+          item.recycling_potential,
+          item.danger_notes
+        ]
+      );
     }
 
     // 6. Seed initial quizzes
-    const [existingQuizzes] = await pool.query('SELECT COUNT(*) as count FROM quizzes');
-    if (existingQuizzes[0].count === 0) {
-      console.log('🎯 Melakukan seed kuis interaktif awal...');
-      for (const q of initialQuizzes) {
-        await pool.query(
-          `INSERT INTO quizzes (id, title, slug, description, difficulty, duration_minutes, reward_points, icon, badge_name) 
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [q.id, q.title, q.slug, q.description, q.difficulty, q.duration_minutes, q.reward_points, q.icon, q.badge_name]
-        );
-      }
+    for (const q of initialQuizzes) {
+      await pool.query(
+        `INSERT IGNORE INTO quizzes (id, title, slug, description, difficulty, duration_minutes, reward_points, icon, badge_name) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [q.id, q.title, q.slug, q.description, q.difficulty, q.duration_minutes, q.reward_points, q.icon, q.badge_name]
+      );
     }
 
     // 7. Seed initial questions
-    const [existingQuestions] = await pool.query('SELECT COUNT(*) as count FROM questions');
-    if (existingQuestions[0].count === 0) {
-      console.log('❓ Melakukan seed pertanyaan kuis awal...');
-      for (const quest of initialQuestions) {
-        await pool.query(
-          `INSERT INTO questions (id, quiz_id, question_text, options, correct_answer, explanation) 
-           VALUES (?, ?, ?, ?, ?, ?)`,
-          [quest.id, quest.quiz_id, quest.question_text, quest.options, quest.correct_answer, quest.explanation]
-        );
-      }
+    for (const quest of initialQuestions) {
+      await pool.query(
+        `INSERT IGNORE INTO questions (id, quiz_id, question_text, options, correct_answer, explanation) 
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [quest.id, quest.quiz_id, quest.question_text, quest.options, quest.correct_answer, quest.explanation]
+      );
     }
 
-    // 8. Seed drop points if empty
-    const [existingDropPoints] = await pool.query('SELECT COUNT(*) as count FROM drop_points');
-    if (existingDropPoints[0].count === 0) {
-      console.log('📍 Melakukan seed titik bank sampah awal...');
-      for (const dp of initialDropPoints) {
-        await pool.query(
-          `INSERT INTO drop_points (id, name, city, address, accepted_types, opening_hours, contact_phone, incentive, latitude, longitude, map_link) 
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [dp.id, dp.name, dp.city, dp.address, dp.accepted_types, dp.opening_hours, dp.contact_phone, dp.incentive, dp.latitude, dp.longitude, dp.map_link]
-        );
-      }
+    // 8. Seed drop points
+    for (const dp of initialDropPoints) {
+      await pool.query(
+        `INSERT IGNORE INTO drop_points (id, name, city, address, accepted_types, opening_hours, contact_phone, incentive, latitude, longitude, map_link) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [dp.id, dp.name, dp.city, dp.address, dp.accepted_types, dp.opening_hours, dp.contact_phone, dp.incentive, dp.latitude, dp.longitude, dp.map_link]
+      );
     }
 
-    // 9. Seed demo users if empty
-    const [existingUsers] = await pool.query('SELECT COUNT(*) as count FROM users');
-    if (existingUsers[0].count === 0) {
-      for (const u of inMemoryStore.users) {
-        await pool.query(
-          `INSERT INTO users (id, name, email, password, role, points, avatar, bio, phone, institution) 
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [u.id, u.name, u.email, u.password, u.role, u.points, u.avatar, u.bio || 'Pecinta lingkungan aktif & siap memilah sampah untuk bumi yang lebih hijau 🌱', u.phone || '081234567890', u.institution || 'Universitas Teknologi Bandung']
-        );
-      }
-      console.log('👤 Akun leaderboard & demo disiapkan (demo@trashly.id / password123)');
+    // 9. Seed demo users
+    for (const u of inMemoryStore.users) {
+      await pool.query(
+        `INSERT IGNORE INTO users (id, name, email, password, role, points, avatar, bio, phone, institution) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [u.id, u.name, u.email, u.password, u.role, u.points, u.avatar, u.bio || 'Pecinta lingkungan aktif & siap memilah sampah untuk bumi yang lebih hijau 🌱', u.phone || '081234567890', u.institution || 'Universitas Teknologi Bandung']
+      );
     }
 
     isConnected = true;

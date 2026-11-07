@@ -44,6 +44,9 @@ export default function Footer() {
                 <Link to="/ensiklopedia" className="hover:text-brand-400 transition-colors">Ensiklopedia Sampah</Link>
               </li>
               <li>
+                <Link to="/bank-sampah" className="hover:text-brand-400 transition-colors">Direktori Bank Sampah</Link>
+              </li>
+              <li>
                 <Link to="/kuis" className="hover:text-brand-400 transition-colors">Kuis Pilah Sampah</Link>
               </li>
               <li>

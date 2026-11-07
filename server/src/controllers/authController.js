@@ -133,16 +133,18 @@ export async function login(req, res) {
     let user = null;
 
     if (isDbConnected()) {
-      const pool = getPool();
-      const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [normalizedEmail]);
-      if (rows.length === 0) {
-        return res.status(401).json({
-          success: false,
-          message: 'Email atau password yang Anda masukkan salah.'
-        });
+      try {
+        const pool = getPool();
+        const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [normalizedEmail]);
+        if (rows && rows.length > 0) {
+          user = rows[0];
+        }
+      } catch (dbErr) {
+        console.warn('DB error di login, fallback ke inMemoryStore:', dbErr.message);
       }
-      user = rows[0];
-    } else {
+    }
+
+    if (!user) {
       user = inMemoryStore.users.find(u => u.email === normalizedEmail);
       if (!user) {
         return res.status(401).json({

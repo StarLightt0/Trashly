@@ -17,8 +17,8 @@ start "Trashly Frontend (Port 3000)" cmd /k "cd client && npm run dev"
 
 echo.
 echo ========================================================
-echo  Server Backend: http://localhost:5000
-echo  Website Frontend: http://localhost:3000
+echo  Server Backend: http://127.0.0.1:5000
+echo  Website Frontend: http://localhost:3000 (atau http://127.0.0.1:3000)
 echo  
 echo  *Catatan: Pastikan Laragon/XAMPP (MySQL) sudah di-Start!
 echo  *Akun Demo: demo@trashly.id | Password: password123
