@@ -2,6 +2,7 @@ import express from 'express';
 import { 
   getDashboard, 
   updateProfile, 
+  changePassword,
   claimCalculatorReward,
   getCalculatorStatus 
 } from '../controllers/userController.js';
@@ -11,6 +12,7 @@ const router = express.Router();
 
 router.get('/dashboard', verifyToken, getDashboard);
 router.put('/profile', verifyToken, updateProfile);
+router.put('/change-password', verifyToken, changePassword);
 router.get('/calculator-status', verifyToken, getCalculatorStatus);
 router.post('/calculator-reward', verifyToken, claimCalculatorReward);
 

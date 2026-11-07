@@ -32,7 +32,7 @@ export function AuthProvider({ children }) {
     loadUser();
   }, [loadUser]);
 
-  const refreshUser = async () => {
+  const refreshUser = useCallback(async () => {
     try {
       const response = await authAPI.getProfile();
       if (response.data.success) {
@@ -43,17 +43,17 @@ export function AuthProvider({ children }) {
       console.error('Failed to refresh user:', err);
     }
     return null;
-  };
+  }, []);
 
-  const updateUserPoints = (newPoints) => {
+  const updateUserPoints = useCallback((newPoints) => {
     if (typeof newPoints === 'number') {
       setUser(prev => prev ? { ...prev, points: newPoints } : prev);
     }
-  };
+  }, []);
 
-  const updateUserData = (updatedFields) => {
+  const updateUserData = useCallback((updatedFields) => {
     setUser(prev => prev ? { ...prev, ...updatedFields } : prev);
-  };
+  }, []);
 
   const login = async (email, password) => {
     const response = await authAPI.login({ email, password });

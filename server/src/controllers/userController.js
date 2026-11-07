@@ -1,3 +1,4 @@
+import bcrypt from 'bcryptjs';
 import { getPool, isDbConnected, inMemoryStore } from '../config/db.js';
 
 export async function getDashboard(req, res) {
@@ -9,13 +10,14 @@ export async function getDashboard(req, res) {
     if (isDbConnected()) {
       const pool = getPool();
       const [userRows] = await pool.query(
-        'SELECT id, name, email, points, avatar, role, created_at FROM users WHERE id = ?',
+        'SELECT * FROM users WHERE id = ?',
         [userId]
       );
       if (userRows.length === 0) {
         return res.status(404).json({ success: false, message: 'Pengguna tidak ditemukan.' });
       }
-      user = userRows[0];
+      const { password, ...safeUser } = userRows[0];
+      user = safeUser;
 
       const [attemptRows] = await pool.query(`
         SELECT 
@@ -120,10 +122,18 @@ export async function getDashboard(req, res) {
 export async function updateProfile(req, res) {
   try {
     const userId = req.user.id;
-    const { name, avatar } = req.body;
+    const name = (req.body.name || req.body.username || '').trim();
+    const avatar = req.body.avatar;
+    const bio = req.body.bio !== undefined ? String(req.body.bio).trim() : undefined;
+    const phone = req.body.phone !== undefined ? String(req.body.phone).trim() : undefined;
+    const institution = req.body.institution !== undefined ? String(req.body.institution).trim() : undefined;
 
-    if (!name || name.trim() === '') {
-      return res.status(400).json({ success: false, message: 'Nama tidak boleh kosong.' });
+    if (!name) {
+      return res.status(400).json({ success: false, message: 'Username / Nama tidak boleh kosong!' });
+    }
+
+    if (name.length < 2) {
+      return res.status(400).json({ success: false, message: 'Username / Nama minimal terdiri dari 2 karakter!' });
     }
 
     // Validate avatar if provided as Data URL / Base64
@@ -152,11 +162,26 @@ export async function updateProfile(req, res) {
     if (isDbConnected()) {
       const pool = getPool();
       let updateSql = 'UPDATE users SET name = ?';
-      const params = [name.trim()];
+      const params = [name];
 
-      if (avatar !== undefined) {
+      // Update avatar if provided
+      if (avatar !== undefined && avatar !== null) {
+        // If avatar is explicit empty string, reset to default bot avatar
+        const newAvatar = avatar === '' ? `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name)}` : avatar;
         updateSql += ', avatar = ?';
-        params.push(avatar);
+        params.push(newAvatar);
+      }
+      if (bio !== undefined) {
+        updateSql += ', bio = ?';
+        params.push(bio);
+      }
+      if (phone !== undefined) {
+        updateSql += ', phone = ?';
+        params.push(phone);
+      }
+      if (institution !== undefined) {
+        updateSql += ', institution = ?';
+        params.push(institution);
       }
 
       updateSql += ' WHERE id = ?';
@@ -164,26 +189,93 @@ export async function updateProfile(req, res) {
 
       await pool.query(updateSql, params);
 
-      const [updated] = await pool.query(
-        'SELECT id, name, email, points, avatar, role FROM users WHERE id = ?',
-        [userId]
-      );
-      return res.json({ success: true, message: 'Profil berhasil diperbarui.', user: updated[0] });
+      const [updated] = await pool.query('SELECT * FROM users WHERE id = ?', [userId]);
+      const { password, ...safeUser } = updated[0];
+      const userResult = {
+        ...safeUser,
+        username: safeUser.name
+      };
+      return res.json({ success: true, message: 'Profil Anda berhasil diperbarui!', user: userResult });
     } else {
       const u = inMemoryStore.users.find(usr => String(usr.id) === String(userId) || (req.user?.email && usr.email === req.user.email));
       if (!u) {
         return res.status(404).json({ success: false, message: 'Pengguna tidak ditemukan.' });
       }
-      u.name = name.trim();
-      if (avatar !== undefined) {
-        u.avatar = avatar;
+      u.name = name;
+      if (avatar !== undefined && avatar !== null) {
+        u.avatar = avatar === '' ? `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name)}` : avatar;
+      }
+      if (bio !== undefined) {
+        u.bio = bio;
+      }
+      if (phone !== undefined) {
+        u.phone = phone;
+      }
+      if (institution !== undefined) {
+        u.institution = institution;
       }
       const { password, ...safeUser } = u;
-      return res.json({ success: true, message: 'Profil berhasil diperbarui.', user: safeUser });
+      return res.json({
+        success: true,
+        message: 'Profil Anda berhasil diperbarui!',
+        user: { ...safeUser, username: safeUser.name }
+      });
     }
   } catch (error) {
     console.error('Error saat updateProfile:', error);
     return res.status(500).json({ success: false, message: 'Gagal memperbarui profil: ' + error.message });
+  }
+}
+
+export async function changePassword(req, res) {
+  try {
+    const userId = req.user.id;
+    const { oldPassword, newPassword, confirmPassword } = req.body;
+
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ success: false, message: 'Password lama dan password baru wajib diisi!' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ success: false, message: 'Password baru minimal 6 karakter!' });
+    }
+
+    if (confirmPassword && newPassword !== confirmPassword) {
+      return res.status(400).json({ success: false, message: 'Konfirmasi password baru tidak cocok!' });
+    }
+
+    if (isDbConnected()) {
+      const pool = getPool();
+      const [rows] = await pool.query('SELECT password FROM users WHERE id = ?', [userId]);
+      if (rows.length === 0) {
+        return res.status(404).json({ success: false, message: 'Pengguna tidak ditemukan.' });
+      }
+
+      const isMatch = await bcrypt.compare(oldPassword, rows[0].password);
+      if (!isMatch) {
+        return res.status(400).json({ success: false, message: 'Password lama yang Anda masukkan salah!' });
+      }
+
+      const hashed = await bcrypt.hash(newPassword, 10);
+      await pool.query('UPDATE users SET password = ? WHERE id = ?', [hashed, userId]);
+      return res.json({ success: true, message: 'Password akun berhasil diubah!' });
+    } else {
+      const u = inMemoryStore.users.find(usr => String(usr.id) === String(userId) || (req.user?.email && usr.email === req.user.email));
+      if (!u) {
+        return res.status(404).json({ success: false, message: 'Pengguna tidak ditemukan.' });
+      }
+
+      const isMatch = await bcrypt.compare(oldPassword, u.password);
+      if (!isMatch) {
+        return res.status(400).json({ success: false, message: 'Password lama yang Anda masukkan salah!' });
+      }
+
+      u.password = await bcrypt.hash(newPassword, 10);
+      return res.json({ success: true, message: 'Password akun berhasil diubah!' });
+    }
+  } catch (error) {
+    console.error('Error saat changePassword:', error);
+    return res.status(500).json({ success: false, message: 'Gagal mengubah password: ' + error.message });
   }
 }
 

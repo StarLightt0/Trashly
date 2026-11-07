@@ -34,7 +34,7 @@ export const inMemoryStore = {
       id: 1,
       name: "Rian Pratama",
       email: "rian@trashly.id",
-      password: "$2a$10$WpA0d12Z5pC218QO/529Qe6m2k4Z3zV8C6uUvN10y/qg7.8H0ZgKu",
+      password: "$2a$10$PCUzdZ0Q1LIlEkZ0yqag2./ONRNQ.hjlwuz7GGl07MkPRSi9Q7ucC", // "password123"
       role: "user",
       points: 450,
       avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Rian",
@@ -44,7 +44,7 @@ export const inMemoryStore = {
       id: 2,
       name: "Alya Putri",
       email: "alya@trashly.id",
-      password: "$2a$10$WpA0d12Z5pC218QO/529Qe6m2k4Z3zV8C6uUvN10y/qg7.8H0ZgKu",
+      password: "$2a$10$PCUzdZ0Q1LIlEkZ0yqag2./ONRNQ.hjlwuz7GGl07MkPRSi9Q7ucC", // "password123"
       role: "user",
       points: 380,
       avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Alya",
@@ -54,17 +54,20 @@ export const inMemoryStore = {
       id: 3,
       name: "Demo Eco Warrior",
       email: "demo@trashly.id",
-      password: "$2a$10$WpA0d12Z5pC218QO/529Qe6m2k4Z3zV8C6uUvN10y/qg7.8H0ZgKu", // "password123"
+      password: "$2a$10$PCUzdZ0Q1LIlEkZ0yqag2./ONRNQ.hjlwuz7GGl07MkPRSi9Q7ucC", // "password123" // "password123"
       role: "user",
       points: 250,
       avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=EcoWarrior",
+      bio: "Pecinta lingkungan aktif & siap memilah sampah untuk bumi yang lebih hijau 🌱",
+      phone: "081234567890",
+      institution: "Universitas Teknologi Bandung",
       created_at: new Date(Date.now() - 86400000 * 3)
     },
     {
       id: 4,
       name: "Budi Santoso",
       email: "budi@trashly.id",
-      password: "$2a$10$WpA0d12Z5pC218QO/529Qe6m2k4Z3zV8C6uUvN10y/qg7.8H0ZgKu",
+      password: "$2a$10$PCUzdZ0Q1LIlEkZ0yqag2./ONRNQ.hjlwuz7GGl07MkPRSi9Q7ucC", // "password123"
       role: "user",
       points: 180,
       avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Budi",
@@ -74,7 +77,7 @@ export const inMemoryStore = {
       id: 5,
       name: "Citra Lestari",
       email: "citra@trashly.id",
-      password: "$2a$10$WpA0d12Z5pC218QO/529Qe6m2k4Z3zV8C6uUvN10y/qg7.8H0ZgKu",
+      password: "$2a$10$PCUzdZ0Q1LIlEkZ0yqag2./ONRNQ.hjlwuz7GGl07MkPRSi9Q7ucC", // "password123"
       role: "user",
       points: 120,
       avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Citra",
@@ -142,6 +145,9 @@ export async function initDatabase() {
         role VARCHAR(50) DEFAULT 'user',
         points INT DEFAULT 0,
         avatar LONGTEXT DEFAULT NULL,
+        bio TEXT DEFAULT NULL,
+        phone VARCHAR(50) DEFAULT NULL,
+        institution VARCHAR(255) DEFAULT 'Universitas Teknologi Bandung',
         last_calculator_claim TIMESTAMP NULL DEFAULT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -160,6 +166,19 @@ export async function initDatabase() {
     } catch (e) {
       // Column might already exist
     }
+
+    // Ensure profile fields (bio, phone, institution) exist
+    try {
+      await pool.query('ALTER TABLE users ADD COLUMN bio TEXT DEFAULT NULL;');
+    } catch (e) {}
+
+    try {
+      await pool.query('ALTER TABLE users ADD COLUMN phone VARCHAR(50) DEFAULT NULL;');
+    } catch (e) {}
+
+    try {
+      await pool.query('ALTER TABLE users ADD COLUMN institution VARCHAR(255) DEFAULT "Universitas Teknologi Bandung";');
+    } catch (e) {}
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS waste_items (
@@ -321,9 +340,9 @@ export async function initDatabase() {
     if (existingUsers[0].count === 0) {
       for (const u of inMemoryStore.users) {
         await pool.query(
-          `INSERT INTO users (id, name, email, password, role, points, avatar) 
-           VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [u.id, u.name, u.email, u.password, u.role, u.points, u.avatar]
+          `INSERT INTO users (id, name, email, password, role, points, avatar, bio, phone, institution) 
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [u.id, u.name, u.email, u.password, u.role, u.points, u.avatar, u.bio || 'Pecinta lingkungan aktif & siap memilah sampah untuk bumi yang lebih hijau 🌱', u.phone || '081234567890', u.institution || 'Universitas Teknologi Bandung']
         );
       }
       console.log('👤 Akun leaderboard & demo disiapkan (demo@trashly.id / password123)');
