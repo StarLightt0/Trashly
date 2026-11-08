@@ -18,7 +18,9 @@ import {
   deleteScanLog,
   getAllUsers,
   updateUserRole,
-  adjustUserPoints
+  adjustUserPoints,
+  getCalculatorSettings,
+  updateCalculatorSettings
 } from '../controllers/adminController.js';
 
 const router = express.Router();
@@ -55,5 +57,9 @@ router.delete('/scans/:id', deleteScanLog);
 router.get('/users', getAllUsers);
 router.put('/users/:id/role', updateUserRole);
 router.post('/users/:id/adjust-points', adjustUserPoints);
+
+// 7. Pengaturan Kalkulator & Kode Bonus
+router.get('/calculator-settings', getCalculatorSettings);
+router.put('/calculator-settings', updateCalculatorSettings);
 
 export default router;

@@ -1,5 +1,6 @@
 import { getPool, isDbConnected, inMemoryStore } from '../config/db.js';
 import { safeParseJson } from '../utils/helpers.js';
+import { calculatorSettings } from '../config/calculatorSettings.js';
 
 // ==========================================
 // 1. DASHBOARD & SYSTEM STATS
@@ -972,5 +973,53 @@ export async function adjustUserPoints(req, res) {
     return res.status(404).json({ success: false, message: 'Pengguna tidak ditemukan.' });
   } catch (error) {
     return res.status(500).json({ success: false, message: 'Gagal menyesuaikan poin pengguna.' });
+  }
+}
+
+export async function getCalculatorSettings(req, res) {
+  try {
+    return res.json({
+      success: true,
+      data: calculatorSettings
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Gagal mengambil pengaturan kalkulator.' });
+  }
+}
+
+export async function updateCalculatorSettings(req, res) {
+  try {
+    const { activeCode, rewardPoints, cooldownDays } = req.body || {};
+
+    if (activeCode !== undefined) {
+      if (!activeCode || typeof activeCode !== 'string' || !activeCode.trim()) {
+        return res.status(400).json({ success: false, message: 'Kode voucher tidak boleh kosong.' });
+      }
+      calculatorSettings.activeCode = activeCode.trim().toUpperCase();
+    }
+
+    if (rewardPoints !== undefined) {
+      const pts = Number(rewardPoints);
+      if (isNaN(pts) || pts <= 0) {
+        return res.status(400).json({ success: false, message: 'Jumlah reward poin harus berupa angka positif.' });
+      }
+      calculatorSettings.rewardPoints = pts;
+    }
+
+    if (cooldownDays !== undefined) {
+      const days = Number(cooldownDays);
+      if (isNaN(days) || days <= 0) {
+        return res.status(400).json({ success: false, message: 'Batas cooldown hari harus berupa angka positif.' });
+      }
+      calculatorSettings.cooldownDays = days;
+    }
+
+    return res.json({
+      success: true,
+      message: 'Pengaturan kode bonus kalkulator berhasil diperbarui!',
+      data: calculatorSettings
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: 'Gagal memperbarui pengaturan kalkulator.' });
   }
 }

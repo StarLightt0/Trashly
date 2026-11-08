@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { getPool, isDbConnected, inMemoryStore } from '../config/db.js';
+import { calculatorSettings } from '../config/calculatorSettings.js';
 
 export async function getDashboard(req, res) {
   try {
@@ -294,7 +295,10 @@ export async function getCalculatorStatus(req, res) {
   try {
     const userId = req.user.id;
     let lastClaim = null;
-    const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+    const cooldownDays = Number(calculatorSettings.cooldownDays) || 7;
+    const COOLDOWN_MS = cooldownDays * 24 * 60 * 60 * 1000;
+    const activeCode = (calculatorSettings.activeCode || 'TRASHLY-WEEKLY').trim().toUpperCase();
+    const rewardPoints = Number(calculatorSettings.rewardPoints) || 30;
 
     if (isDbConnected()) {
       const pool = getPool();
@@ -317,17 +321,19 @@ export async function getCalculatorStatus(req, res) {
         hoursRemaining: 0,
         minutesRemaining: 0,
         nextClaimDate: null,
-        activeCode: 'TRASHLY-WEEKLY'
+        activeCode,
+        rewardPoints,
+        cooldownDays
       });
     }
 
     const timePassed = Date.now() - new Date(lastClaim).getTime();
-    if (timePassed < ONE_WEEK_MS) {
-      const msLeft = ONE_WEEK_MS - timePassed;
+    if (timePassed < COOLDOWN_MS) {
+      const msLeft = COOLDOWN_MS - timePassed;
       const daysRemaining = Math.ceil(msLeft / (24 * 60 * 60 * 1000));
       const hoursRemaining = Math.ceil(msLeft / (60 * 60 * 1000));
       const minutesRemaining = Math.ceil(msLeft / (60 * 1000));
-      const nextClaimDate = new Date(new Date(lastClaim).getTime() + ONE_WEEK_MS).toISOString();
+      const nextClaimDate = new Date(new Date(lastClaim).getTime() + COOLDOWN_MS).toISOString();
 
       return res.json({
         success: true,
@@ -337,7 +343,9 @@ export async function getCalculatorStatus(req, res) {
         minutesRemaining,
         nextClaimDate,
         lastClaimDate: new Date(lastClaim).toISOString(),
-        activeCode: 'TRASHLY-WEEKLY'
+        activeCode,
+        rewardPoints,
+        cooldownDays
       });
     }
 
@@ -348,7 +356,9 @@ export async function getCalculatorStatus(req, res) {
       hoursRemaining: 0,
       minutesRemaining: 0,
       nextClaimDate: null,
-      activeCode: 'TRASHLY-WEEKLY'
+      activeCode,
+      rewardPoints,
+      cooldownDays
     });
 
   } catch (error) {
@@ -361,30 +371,47 @@ export async function claimCalculatorReward(req, res) {
   try {
     const userId = req.user.id;
     const { code } = req.body || {};
-    const rewardPoints = 30;
-    const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
+    const rewardPoints = Number(calculatorSettings.rewardPoints) || 30;
+    const cooldownDays = Number(calculatorSettings.cooldownDays) || 7;
+    const COOLDOWN_MS = cooldownDays * 24 * 60 * 60 * 1000;
+    const expectedCode = (calculatorSettings.activeCode || 'TRASHLY-WEEKLY').trim().toUpperCase();
 
-    let user = null;
+    // 1. VALIDASI KODE REDEEM
+    if (!code || typeof code !== 'string' || !code.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Silakan masukkan kode redeem bonus terlebih dahulu.'
+      });
+    }
 
+    const inputCode = code.trim().toUpperCase();
+    if (inputCode !== expectedCode) {
+      return res.status(400).json({
+        success: false,
+        message: `Kode redeem "${code.trim()}" salah atau tidak valid! Pastikan Anda memasukkan kode yang benar.`
+      });
+    }
+
+    // 2. CEK USER & COOLDOWN
     if (isDbConnected()) {
       const pool = getPool();
       const [rows] = await pool.query('SELECT id, points, last_calculator_claim FROM users WHERE id = ?', [userId]);
       if (rows.length === 0) {
         return res.status(404).json({ success: false, message: 'Pengguna tidak ditemukan.' });
       }
-      user = rows[0];
+      const user = rows[0];
 
-      // Check weekly cooldown (7 days)
+      // Check weekly/cooldown limit
       if (user.last_calculator_claim) {
         const timePassed = Date.now() - new Date(user.last_calculator_claim).getTime();
-        if (timePassed < ONE_WEEK_MS) {
-          const msLeft = ONE_WEEK_MS - timePassed;
+        if (timePassed < COOLDOWN_MS) {
+          const msLeft = COOLDOWN_MS - timePassed;
           const daysLeft = Math.ceil(msLeft / (24 * 60 * 60 * 1000));
           const hoursLeft = Math.ceil(msLeft / (60 * 60 * 1000));
-          const nextDate = new Date(new Date(user.last_calculator_claim).getTime() + ONE_WEEK_MS).toISOString();
+          const nextDate = new Date(new Date(user.last_calculator_claim).getTime() + COOLDOWN_MS).toISOString();
           return res.status(400).json({
             success: false,
-            message: `Batas klaim kode bonus kalkulator adalah 1 minggu sekali. Anda dapat mengklaim kembali dalam ${daysLeft} hari (${hoursLeft} jam)!`,
+            message: `Batas klaim kode bonus kalkulator adalah ${cooldownDays} hari sekali. Anda dapat mengklaim kembali dalam ${daysLeft} hari (${hoursLeft} jam)!`,
             canClaim: false,
             daysRemaining: daysLeft,
             hoursRemaining: hoursLeft,
@@ -401,13 +428,13 @@ export async function claimCalculatorReward(req, res) {
 
       return res.json({
         success: true,
-        message: 'Selamat! Kode bonus mingguan +30 Eco-Points berhasil diklaim.',
+        message: `Selamat! Kode redeem "${inputCode}" valid! +${rewardPoints} Eco-Points berhasil diklaim ke akun Anda.`,
         pointsEarned: rewardPoints,
         newTotalPoints: updated[0].points,
         canClaim: false,
-        daysRemaining: 7,
-        hoursRemaining: 168,
-        nextClaimDate: new Date(Date.now() + ONE_WEEK_MS).toISOString()
+        daysRemaining: cooldownDays,
+        hoursRemaining: cooldownDays * 24,
+        nextClaimDate: new Date(Date.now() + COOLDOWN_MS).toISOString()
       });
 
     } else {
@@ -416,17 +443,17 @@ export async function claimCalculatorReward(req, res) {
         return res.status(404).json({ success: false, message: 'Pengguna tidak ditemukan.' });
       }
 
-      // Check weekly cooldown (7 days)
+      // Check cooldown
       if (u.last_calculator_claim) {
         const timePassed = Date.now() - new Date(u.last_calculator_claim).getTime();
-        if (timePassed < ONE_WEEK_MS) {
-          const msLeft = ONE_WEEK_MS - timePassed;
+        if (timePassed < COOLDOWN_MS) {
+          const msLeft = COOLDOWN_MS - timePassed;
           const daysLeft = Math.ceil(msLeft / (24 * 60 * 60 * 1000));
           const hoursLeft = Math.ceil(msLeft / (60 * 60 * 1000));
-          const nextDate = new Date(new Date(u.last_calculator_claim).getTime() + ONE_WEEK_MS).toISOString();
+          const nextDate = new Date(new Date(u.last_calculator_claim).getTime() + COOLDOWN_MS).toISOString();
           return res.status(400).json({
             success: false,
-            message: `Batas klaim kode bonus kalkulator adalah 1 minggu sekali. Anda dapat mengklaim kembali dalam ${daysLeft} hari (${hoursLeft} jam)!`,
+            message: `Batas klaim kode bonus kalkulator adalah ${cooldownDays} hari sekali. Anda dapat mengklaim kembali dalam ${daysLeft} hari (${hoursLeft} jam)!`,
             canClaim: false,
             daysRemaining: daysLeft,
             hoursRemaining: hoursLeft,
@@ -440,13 +467,13 @@ export async function claimCalculatorReward(req, res) {
 
       return res.json({
         success: true,
-        message: 'Selamat! Kode bonus mingguan +30 Eco-Points berhasil diklaim.',
+        message: `Selamat! Kode redeem "${inputCode}" valid! +${rewardPoints} Eco-Points berhasil diklaim ke akun Anda.`,
         pointsEarned: rewardPoints,
         newTotalPoints: u.points,
         canClaim: false,
-        daysRemaining: 7,
-        hoursRemaining: 168,
-        nextClaimDate: new Date(Date.now() + ONE_WEEK_MS).toISOString()
+        daysRemaining: cooldownDays,
+        hoursRemaining: cooldownDays * 24,
+        nextClaimDate: new Date(Date.now() + COOLDOWN_MS).toISOString()
       });
     }
 

@@ -79,7 +79,9 @@ export const adminAPI = {
   deleteScan: (id) => api.delete(`/admin/scans/${id}`),
   getUsers: (params) => api.get('/admin/users', { params }),
   updateUserRole: (id, role) => api.put(`/admin/users/${id}/role`, { role }),
-  adjustUserPoints: (id, amount, reason) => api.post(`/admin/users/${id}/adjust-points`, { amount, reason })
+  adjustUserPoints: (id, amount, reason) => api.post(`/admin/users/${id}/adjust-points`, { amount, reason }),
+  getCalculatorSettings: () => api.get('/admin/calculator-settings'),
+  updateCalculatorSettings: (data) => api.put('/admin/calculator-settings', data)
 };
 
 export default api;

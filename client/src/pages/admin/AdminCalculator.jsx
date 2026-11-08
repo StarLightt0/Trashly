@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { adminAPI } from '../../services/api';
 import {
   Calculator as CalcIcon,
   Sparkles,
@@ -26,11 +27,48 @@ export default function AdminCalculator() {
   const [rewardAmount, setRewardAmount] = useState(30);
   const [cooldownDays, setCooldownDays] = useState(7);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleSaveSettings = (e) => {
+  useEffect(() => {
+    async function fetchSettings() {
+      try {
+        const res = await adminAPI.getCalculatorSettings();
+        if (res.data?.success && res.data?.data) {
+          if (res.data.data.activeCode) setActiveCode(res.data.data.activeCode);
+          if (res.data.data.rewardPoints) setRewardAmount(res.data.data.rewardPoints);
+          if (res.data.data.cooldownDays) setCooldownDays(res.data.data.cooldownDays);
+        }
+      } catch (err) {
+        console.warn('Gagal memuat pengaturan kalkulator:', err);
+      }
+    }
+    fetchSettings();
+  }, []);
+
+  const handleSaveSettings = async (e) => {
     e.preventDefault();
-    setSavedSuccess(true);
-    setTimeout(() => setSavedSuccess(false), 3000);
+    if (!activeCode.trim()) {
+      setErrorMessage('Kode voucher tidak boleh kosong.');
+      return;
+    }
+    try {
+      setSaving(true);
+      setErrorMessage('');
+      const res = await adminAPI.updateCalculatorSettings({
+        activeCode: activeCode.trim().toUpperCase(),
+        rewardPoints: rewardAmount,
+        cooldownDays: cooldownDays
+      });
+      if (res.data?.success) {
+        setSavedSuccess(true);
+        setTimeout(() => setSavedSuccess(false), 3000);
+      }
+    } catch (err) {
+      setErrorMessage(err.response?.data?.message || 'Gagal menyimpan pengaturan voucher.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -101,6 +139,13 @@ export default function AdminCalculator() {
             </div>
           )}
 
+          {errorMessage && (
+            <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>{errorMessage}</span>
+            </div>
+          )}
+
           <form onSubmit={handleSaveSettings} className="space-y-3.5 text-xs">
             <div>
               <label className="block font-semibold text-slate-700 mb-1">Kode Voucher Aktif</label>
@@ -144,9 +189,10 @@ export default function AdminCalculator() {
 
             <button
               type="submit"
-              className="w-full py-2.5 bg-brand-600 hover:bg-brand-500 text-white font-semibold rounded-xl transition shadow-sm"
+              disabled={saving}
+              className="w-full py-2.5 bg-brand-600 hover:bg-brand-500 disabled:opacity-50 text-white font-semibold rounded-xl transition shadow-sm cursor-pointer"
             >
-              Simpan Pengaturan Voucher
+              {saving ? 'Menyimpan...' : 'Simpan Pengaturan Voucher'}
             </button>
           </form>
         </div>

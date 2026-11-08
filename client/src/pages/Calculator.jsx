@@ -35,7 +35,7 @@ export default function Calculator() {
 
   const [claimedReward, setClaimedReward] = useState(false);
   const [claiming, setClaiming] = useState(false);
-  const [claimCode, setClaimCode] = useState('TRASHLY-WEEKLY');
+  const [claimCode, setClaimCode] = useState('');
   const [claimMessage, setClaimMessage] = useState('');
   const [claimError, setClaimError] = useState('');
   const [claimStatus, setClaimStatus] = useState({
@@ -43,7 +43,8 @@ export default function Calculator() {
     daysRemaining: 0,
     hoursRemaining: 0,
     nextClaimDate: null,
-    activeCode: 'TRASHLY-WEEKLY'
+    activeCode: 'TRASHLY-WEEKLY',
+    rewardPoints: 30
   });
 
   React.useEffect(() => {
@@ -53,9 +54,6 @@ export default function Calculator() {
           const res = await userAPI.getCalculatorStatus();
           if (res.data.success) {
             setClaimStatus(res.data);
-            if (res.data.activeCode) {
-              setClaimCode(res.data.activeCode);
-            }
             if (!res.data.canClaim) {
               setClaimedReward(true);
               setClaimMessage(`Bonus mingguan sudah diklaim. Dapat diklaim kembali dalam ${res.data.daysRemaining} hari lagi.`);
@@ -115,18 +113,27 @@ export default function Calculator() {
   const handleClaimReward = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
     if (!isAuthenticated) return;
+
+    if (!claimCode || !claimCode.trim()) {
+      setClaimError('Silakan masukkan kode redeem bonus terlebih dahulu.');
+      setClaimMessage('');
+      return;
+    }
+
     setClaiming(true);
     setClaimError('');
+    setClaimMessage('');
     try {
-      const res = await userAPI.claimCalculatorReward({ code: claimCode });
+      const res = await userAPI.claimCalculatorReward({ code: claimCode.trim() });
       if (res.data.success) {
         setClaimedReward(true);
-        setClaimStatus({
+        setClaimStatus(prev => ({
+          ...prev,
           canClaim: false,
           daysRemaining: res.data.daysRemaining || 7,
           hoursRemaining: res.data.hoursRemaining || 168,
           nextClaimDate: res.data.nextClaimDate
-        });
+        }));
         setClaimMessage(res.data.message || '+30 Eco-Points berhasil diklaim!');
         if (typeof res.data.newTotalPoints === 'number') {
           updateUserPoints(res.data.newTotalPoints);
@@ -134,7 +141,7 @@ export default function Calculator() {
         await refreshUser();
       }
     } catch (err) {
-      setClaimError(err.response?.data?.message || 'Gagal mengklaim kode bonus.');
+      setClaimError(err.response?.data?.message || 'Kode redeem tidak valid atau salah.');
     } finally {
       setClaiming(false);
     }
@@ -423,9 +430,12 @@ export default function Calculator() {
                     <input
                       type="text"
                       value={claimCode}
-                      onChange={(e) => setClaimCode(e.target.value.toUpperCase())}
-                      placeholder="Masukkan Kode Klaim"
-                      className="flex-1 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white"
+                      onChange={(e) => {
+                        setClaimCode(e.target.value.toUpperCase());
+                        if (claimError) setClaimError('');
+                      }}
+                      placeholder="Masukkan Kode Redeem"
+                      className="flex-1 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold uppercase tracking-wider text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-colors"
                     />
                     <button
                       type="submit"
@@ -433,18 +443,10 @@ export default function Calculator() {
                       className="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-extrabold rounded-xl shadow-md text-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer whitespace-nowrap flex items-center gap-1.5"
                     >
                       <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                      {claiming ? 'Mengklaim...' : 'Klaim (+30 Pts)'}
+                      {claiming ? 'Mengecek...' : `Klaim (+${claimStatus.rewardPoints || 30} Pts)`}
                     </button>
                   </div>
                   <div className="flex items-center justify-between text-[11px] text-slate-500 px-1">
-                    <span>Kode mingguan aktif: <strong className="text-brand-700 font-mono">TRASHLY-WEEKLY</strong></span>
-                    <button
-                      type="button"
-                      onClick={() => setClaimCode('TRASHLY-WEEKLY')}
-                      className="text-brand-600 font-bold hover:underline"
-                    >
-                      Gunakan Kode
-                    </button>
                   </div>
                 </form>
               ) : (
